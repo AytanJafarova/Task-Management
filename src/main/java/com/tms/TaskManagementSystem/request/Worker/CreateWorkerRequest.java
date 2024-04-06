@@ -1,8 +1,11 @@
 package com.tms.TaskManagementSystem.request.Worker;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
 
 @Data
 @Builder
@@ -16,3 +19,4 @@ public class CreateWorkerRequest {
     private String email;
     private Long organization_id;
 }
+

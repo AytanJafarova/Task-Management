@@ -1,25 +1,29 @@
 package com.tms.TaskManagementSystem.services.impl;
 
-import com.tms.TaskManagementSystem.domain.Organization;
-import com.tms.TaskManagementSystem.domain.Worker;
+import com.tms.TaskManagementSystem.dto.WorkerDTO;
+import com.tms.TaskManagementSystem.entity.Organization;
+import com.tms.TaskManagementSystem.entity.Worker;
+import com.tms.TaskManagementSystem.entity.enums.OrganizationStatus;
 import com.tms.TaskManagementSystem.exception.DataNotFoundException;
 import com.tms.TaskManagementSystem.exception.IllegalArgumentException;
 import com.tms.TaskManagementSystem.mappers.OrganizationMapper;
 import com.tms.TaskManagementSystem.repository.OrganizationRepository;
 import com.tms.TaskManagementSystem.request.Organization.CreateOrganizationRequest;
 import com.tms.TaskManagementSystem.request.Organization.UpdateOrganizationRequest;
-import com.tms.TaskManagementSystem.response.Organization.OrganizationGetAllResponse;
-import com.tms.TaskManagementSystem.response.Organization.OrganizationGetResponse;
 import com.tms.TaskManagementSystem.response.Organization.OrganizationResponse;
-import com.tms.TaskManagementSystem.response.Worker.WorkerForOrganizationResponse;
+import com.tms.TaskManagementSystem.response.Organization.OrganizationWorkersResponse;
 import com.tms.TaskManagementSystem.services.OrganizationService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,32 +31,21 @@ public class OrganizationServiceImpl implements OrganizationService {
     private final OrganizationRepository organizationRepository;
     boolean checkingName(String name)
     {
-        List<Organization> organizations = organizationRepository.findAll();
-        boolean adding = true;
-        if(name !=null && !name.isBlank())
-        {
-            for(Organization organization : organizations)
-            {
-                if (organization.getName().equalsIgnoreCase(name))
-                {
-                    adding = false;
-                    break;
-                }
-            }
-        }
-        else{
-            adding=false;
-        }
-        return adding;
+        Optional<Organization> organization = organizationRepository.findByName(name.toLowerCase());
+        return !name.isBlank() && organization.isEmpty();
     }
 
     @Override
-    public OrganizationResponse AddOrganization(CreateOrganizationRequest request) {
+    public OrganizationResponse save(CreateOrganizationRequest request) {
         if(checkingName(request.getName()))
         {
             Organization organization = organizationRepository.save(Organization.builder()
-                    .name(request.getName()).build());
-            return OrganizationResponse.builder().name(organization.getName()).build();
+                    .name(request.getName())
+                    .status(OrganizationStatus.ACTIVE).build());
+            return OrganizationResponse.builder().name(organization.getName())
+                    .status(organization.getStatus())
+                    .id(organization.getId())
+                    .build();
         }
         else{
             throw new IllegalArgumentException("Invalid operation!");
@@ -60,7 +53,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public OrganizationResponse UpdateOrganization(Long id,UpdateOrganizationRequest request) {
+    public OrganizationResponse update(Long id,UpdateOrganizationRequest request) {
 
         Optional<Organization> selectedOrganization = organizationRepository.findById(id);
         if(selectedOrganization.isPresent())
@@ -79,11 +72,11 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public boolean SoftDeleteOrganization(Long id) {
-        Optional<Organization> selectedOrganization = organizationRepository.findById(id);
+    public boolean inactivate(Long id) {
+        Optional<Organization> selectedOrganization = organizationRepository.findByIdAndStatus(id, OrganizationStatus.ACTIVE);
         if(selectedOrganization.isPresent())
         {
-            selectedOrganization.get().setDeleted(true);
+            selectedOrganization.get().setStatus(OrganizationStatus.INACTIVE);
             organizationRepository.save(selectedOrganization.get());
             return true;
         }
@@ -93,7 +86,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public boolean HardDeleteOrganization(Long id) {
+    public boolean delete(Long id) {
         Optional<Organization> selectedOrganization = organizationRepository.findById(id);
         if(selectedOrganization.isPresent())
         {
@@ -101,65 +94,91 @@ public class OrganizationServiceImpl implements OrganizationService {
             return true;
         }
         else{
-            throw new DataNotFoundException("Organization with id of "+ id+" is not found!");
+            throw new DataNotFoundException("Organization with id of "+id+" is not found!");
         }
     }
 
     @Override
-    public List<OrganizationGetAllResponse> GetOrganizations() {
-        List<Organization> organizations = organizationRepository.findAll();
-        List<OrganizationGetAllResponse> organizationGetResponses = new ArrayList<>();
-        for(Organization organization : organizations)
+    public List<OrganizationWorkersResponse> getOrganizations(int pgNum, int pgSize) {
+        Pageable pageable = PageRequest.of(pgNum, pgSize);
+        Page<Organization> organizationPage = organizationRepository.findAll(pageable);
+        List<OrganizationWorkersResponse> organizationResponses = new ArrayList<>();
+        for(Organization organization : organizationPage)
         {
-                OrganizationGetAllResponse organizationGetResponse = OrganizationMapper.INSTANCE.organizationToOrganizationGetAllResponse(organization);
-                organizationGetResponses.add(organizationGetResponse);
+            OrganizationWorkersResponse organizationResponse = OrganizationMapper.INSTANCE.organizationToOrganizationWorkerResponse(organization);
+            organizationResponses.add(organizationResponse);
         }
-        return organizationGetResponses;
+        return organizationResponses;
     }
 
     @Override
-    public List<OrganizationGetResponse> GetOrganizationsWithWorkers() {
-        List<Organization> organizations = organizationRepository.findAllWithWorkers();
-        List<OrganizationGetResponse> organizationGetResponses = new ArrayList<>();
-        for (Organization organization : organizations) {
+    public List<OrganizationResponse> getActiveOrganizations(int pgNum, int pgSize) {
+        Pageable pageable = PageRequest.of(pgNum, pgSize);
+        List<Organization> organizationPage = organizationRepository.findByStatus(OrganizationStatus.ACTIVE, pageable);
+        List<OrganizationResponse> organizationResponses = new ArrayList<>();
+        for(Organization organization : organizationPage)
+        {
+            OrganizationResponse organizationResponse = OrganizationMapper.INSTANCE.organizationToOrganizationResponse(organization);
+            organizationResponses.add(organizationResponse);
+        }
+        return organizationResponses;
+    }
+
+    @Override
+    public List<OrganizationResponse> getOrganizationsWorkers(int pgNum,int pgSize) {
+        Pageable pageable = PageRequest.of(pgNum, pgSize);
+        List<Organization> organizationPage = organizationRepository.findAllWithWorkers(pageable);
+        List<OrganizationResponse> organizationResponses = new ArrayList<>();
+        for (Organization organization : organizationPage) {
             List<Worker> workers = organization.getWorkers();
-            List<WorkerForOrganizationResponse> workerResponses = new ArrayList<>();
+            List<WorkerDTO> workerDTOs = new ArrayList<>();
             for (Worker worker : workers) {
-                WorkerForOrganizationResponse workerResponse = WorkerForOrganizationResponse.builder()
+                WorkerDTO workerdto = WorkerDTO.builder()
                         .username(worker.getUsername())
                         .password(worker.getPassword())
                         .email(worker.getEmail())
+                        .name(worker.getName())
+                        .surname(worker.getSurname())
+                        .status(worker.getStatus())
+                        .id(worker.getId())
                         .build();
-                workerResponses.add(workerResponse);
+                workerDTOs.add(workerdto);
             }
-            OrganizationGetResponse organizationGetResponse = OrganizationGetResponse.builder()
+            OrganizationResponse organizationResponse = OrganizationResponse.builder()
                     .name(organization.getName())
-                    .worker(workerResponses)
+                    .id(organization.getId())
+                    .status(organization.getStatus())
+                    .workers(workerDTOs)
                     .build();
 
-            organizationGetResponses.add(organizationGetResponse);
+            organizationResponses.add(organizationResponse);
         }
-        return organizationGetResponses;
+        return organizationResponses;
     }
 
     @Override
-    public OrganizationGetResponse GetOrganizationById(Long id) {
-        Optional<Organization> organizationOptional = organizationRepository.findById(id);
+    public OrganizationResponse getOrganizationById(Long id) {
+        Optional<Organization> organizationOptional = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE);
         if (organizationOptional.isPresent()) {
             Organization organization = organizationOptional.get();
             List<Worker> workers = organization.getWorkers();
-            List<WorkerForOrganizationResponse> workerResponses = new ArrayList<>();
+            List<WorkerDTO> workerDTOs = new ArrayList<>();
             for (Worker worker : workers) {
-                WorkerForOrganizationResponse workerResponse = WorkerForOrganizationResponse.builder()
+                WorkerDTO workerDTO = WorkerDTO.builder()
                         .username(worker.getUsername())
                         .password(worker.getPassword())
                         .email(worker.getEmail())
+                        .name(worker.getName())
+                        .surname(worker.getSurname())
+                        .id(worker.getId())
                         .build();
-                workerResponses.add(workerResponse);
+                workerDTOs.add(workerDTO);
             }
-            return OrganizationGetResponse.builder()
+            return OrganizationResponse.builder()
                     .name(organization.getName())
-                    .worker(workerResponses)
+                    .id(organization.getId())
+                    .status(organization.getStatus())
+                    .workers(workerDTOs)
                     .build();
         } else {
             throw new DataNotFoundException("Organization with id of " + id + " is not found!");

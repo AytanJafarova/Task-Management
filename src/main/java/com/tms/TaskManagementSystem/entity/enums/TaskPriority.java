@@ -1,9 +1,9 @@
-package com.tms.TaskManagementSystem.enums;
+package com.tms.TaskManagementSystem.entity.enums;
 
 import lombok.Getter;
 
 @Getter
-public enum TaskDegree {
+public enum TaskPriority {
     LOW(0,"LOW"),
     MEDIUM(1,"MEDIUM"),
     HIGH(2,"HIGH");
@@ -11,12 +11,12 @@ public enum TaskDegree {
     private final int intValue;
     private final String stringValue;
 
-    TaskDegree(int intValue, String stringValue)
+    TaskPriority(int intValue, String stringValue)
     {
         this.intValue = intValue;
         this.stringValue = stringValue;
     }
-    public static TaskDegree definingDegree(int degreeInt)
+    public static TaskPriority definingDegree(int degreeInt)
     {
         return switch (degreeInt) {
             case 0 -> LOW;

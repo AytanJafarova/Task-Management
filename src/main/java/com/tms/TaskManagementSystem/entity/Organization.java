@@ -1,9 +1,8 @@
-package com.tms.TaskManagementSystem.domain;
+package com.tms.TaskManagementSystem.entity;
 
+import com.tms.TaskManagementSystem.entity.enums.OrganizationStatus;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -20,8 +19,10 @@ public class Organization {
 
     @Column(unique = true)
     private String name;
-    private boolean isDeleted;
 
-    @OneToMany(mappedBy = "organization",cascade = CascadeType.ALL)
+    @Enumerated(EnumType.STRING)
+    private OrganizationStatus status;
+
+    @OneToMany(mappedBy = "organization",fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Worker> workers;
 }

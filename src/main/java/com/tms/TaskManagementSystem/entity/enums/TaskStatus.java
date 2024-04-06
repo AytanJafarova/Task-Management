@@ -1,4 +1,4 @@
-package com.tms.TaskManagementSystem.enums;
+package com.tms.TaskManagementSystem.entity.enums;
 
 import lombok.Getter;
 

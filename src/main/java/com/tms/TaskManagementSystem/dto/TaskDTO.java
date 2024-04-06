@@ -1,12 +1,8 @@
-package com.tms.TaskManagementSystem.response.Task;
+package com.tms.TaskManagementSystem.dto;
 
-import com.tms.TaskManagementSystem.dto.WorkerDTO;
 import com.tms.TaskManagementSystem.entity.enums.TaskPriority;
 import com.tms.TaskManagementSystem.entity.enums.TaskStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -14,14 +10,15 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskResponse {
+@Getter
+@Setter
+public class TaskDTO {
     private Long id;
     private String header;
     private String content;
-    private TaskPriority priority;
+    private TaskPriority degree;
     private TaskStatus status;
     private LocalDateTime created;
     private LocalDateTime deadline;
     private LocalDateTime closed;
-    private WorkerDTO worker;
 }

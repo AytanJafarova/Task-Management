@@ -1,10 +1,10 @@
 package com.tms.TaskManagementSystem.response.Organization;
 
+import java.util.List;
+
 import com.tms.TaskManagementSystem.dto.WorkerDTO;
 import com.tms.TaskManagementSystem.entity.enums.OrganizationStatus;
 import lombok.*;
-
-import java.util.List;
 
 @Data
 @Builder
@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-public class OrganizationResponse {
+public class OrganizationWorkersResponse {
     private Long id;
     private String name;
     private List<WorkerDTO> workers;

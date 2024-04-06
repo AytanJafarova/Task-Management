@@ -2,18 +2,18 @@ package com.tms.TaskManagementSystem.services;
 
 import com.tms.TaskManagementSystem.request.Organization.CreateOrganizationRequest;
 import com.tms.TaskManagementSystem.request.Organization.UpdateOrganizationRequest;
-import com.tms.TaskManagementSystem.response.Organization.OrganizationGetAllResponse;
-import com.tms.TaskManagementSystem.response.Organization.OrganizationGetResponse;
 import com.tms.TaskManagementSystem.response.Organization.OrganizationResponse;
+import com.tms.TaskManagementSystem.response.Organization.OrganizationWorkersResponse;
 
 import java.util.List;
 
 public interface OrganizationService {
-    OrganizationResponse AddOrganization(CreateOrganizationRequest request);
-    OrganizationResponse UpdateOrganization(Long id,UpdateOrganizationRequest request);
-    boolean SoftDeleteOrganization(Long id);
-    boolean HardDeleteOrganization(Long id);
-    List<OrganizationGetAllResponse> GetOrganizations();
-    List<OrganizationGetResponse> GetOrganizationsWithWorkers();
-    OrganizationGetResponse GetOrganizationById(Long id);
+    OrganizationResponse save(CreateOrganizationRequest request);
+    OrganizationResponse update(Long id,UpdateOrganizationRequest request);
+    boolean inactivate(Long id);
+    boolean delete(Long id);
+    List<OrganizationWorkersResponse> getOrganizations(int pgNum,int pgSize);
+    List<OrganizationResponse> getActiveOrganizations(int pgNum,int pgSize);
+    List<OrganizationResponse> getOrganizationsWorkers(int pgNum,int pgSize);
+    OrganizationResponse getOrganizationById(Long id);
 }

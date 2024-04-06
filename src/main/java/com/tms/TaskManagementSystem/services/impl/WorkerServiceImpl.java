@@ -1,7 +1,9 @@
 package com.tms.TaskManagementSystem.services.impl;
 
-import com.tms.TaskManagementSystem.domain.Organization;
-import com.tms.TaskManagementSystem.domain.Worker;
+import com.tms.TaskManagementSystem.entity.Organization;
+import com.tms.TaskManagementSystem.entity.Worker;
+import com.tms.TaskManagementSystem.entity.enums.OrganizationStatus;
+import com.tms.TaskManagementSystem.entity.enums.WorkerStatus;
 import com.tms.TaskManagementSystem.exception.DataNotFoundException;
 import com.tms.TaskManagementSystem.exception.IllegalArgumentException;
 import com.tms.TaskManagementSystem.mappers.OrganizationMapper;
@@ -9,13 +11,13 @@ import com.tms.TaskManagementSystem.mappers.WorkerMapper;
 import com.tms.TaskManagementSystem.repository.OrganizationRepository;
 import com.tms.TaskManagementSystem.repository.WorkerRepository;
 import com.tms.TaskManagementSystem.request.Worker.CreateWorkerRequest;
-import com.tms.TaskManagementSystem.request.Worker.UpdateWorkerOrganizationRequest;
 import com.tms.TaskManagementSystem.request.Worker.UpdateWorkerRequest;
-import com.tms.TaskManagementSystem.response.Worker.WorkerGetResponse;
 import com.tms.TaskManagementSystem.response.Worker.WorkerResponse;
 import com.tms.TaskManagementSystem.services.WorkerService;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.jdbc.Work;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -29,21 +31,12 @@ public class WorkerServiceImpl implements WorkerService {
     private final OrganizationRepository organizationRepository;
 
     boolean checkingUserCredentials(String username, String password, boolean ignoreUsername) {
-        List<Worker> workers = workerRepository.findAll();
-        boolean result = true;
-        if (!username.isBlank() && !password.isBlank()) {
-            for (Worker worker : workers) {
-                if ((!ignoreUsername && worker.getUsername().equalsIgnoreCase(username)) || password.trim().length() < 8) {
-                    result = false;
-                    break;
-                }
-            }
-        }
-        return result;
+        Optional<Worker> workerSelect = workerRepository.findByUsername(username.toLowerCase());
+        return !username.isBlank() && !password.isBlank() && password.length() >= 8 && workerSelect.isEmpty();
     }
     @Override
-    public WorkerResponse AddWorker(CreateWorkerRequest request) {
-        Optional<Organization> organizationWorker = organizationRepository.findById(request.getOrganization_id());
+    public WorkerResponse save(CreateWorkerRequest request) {
+        Optional<Organization> organizationWorker = organizationRepository.findByIdAndStatus(request.getOrganization_id(), OrganizationStatus.ACTIVE);
         if(checkingUserCredentials(request.getUsername(),request.getPassword(),false))
         {
             if(organizationWorker.isPresent())
@@ -54,12 +47,17 @@ public class WorkerServiceImpl implements WorkerService {
                         .email(request.getEmail())
                         .password(request.getPassword())
                         .username(request.getUsername().toLowerCase())
+                        .status(WorkerStatus.ACTIVE)
                         .organization(organizationWorker.get()).build());
                 return WorkerResponse.builder()
                         .username(worker.getUsername().toLowerCase())
                         .email(worker.getEmail())
                         .password(worker.getPassword())
-                        .organization(OrganizationMapper.INSTANCE.organizationToOrganizationForWorkerResponse(organizationWorker.get()))
+                        .name(worker.getName())
+                        .surname(worker.getSurname())
+                        .status(worker.getStatus())
+                        .id(worker.getId())
+                        .organization(OrganizationMapper.INSTANCE.organizationToOrganizationDTO(organizationWorker.get()))
                         .build();
             }
             else{
@@ -72,7 +70,7 @@ public class WorkerServiceImpl implements WorkerService {
     }
 
     @Override
-    public WorkerResponse UpdateWorker(Long id,UpdateWorkerRequest request) {
+    public WorkerResponse update(Long id,UpdateWorkerRequest request) {
         Optional<Worker> selectedWorker = workerRepository.findById(id);
         boolean ignoreUsername = false;
         if(selectedWorker.isPresent())
@@ -97,30 +95,8 @@ public class WorkerServiceImpl implements WorkerService {
         }
         throw new DataNotFoundException("Worker with id of " + id + " is not found!");
     }
-
     @Override
-    public WorkerResponse ChangeOrganization(Long id, UpdateWorkerOrganizationRequest request) {
-        Optional<Worker> selectedWorker = workerRepository.findById(id);
-        List<Long> list_ids = organizationRepository.findAllOrganizationIds();
-        Optional<Organization> newOrganization = organizationRepository.findById(request.getOrganization_id());
-        if(selectedWorker.isPresent())
-        {
-            if(list_ids.contains(request.getOrganization_id()))
-            {
-                selectedWorker.get().setOrganization(newOrganization.get());
-                return WorkerMapper.INSTANCE.workerToWorkerResponse(selectedWorker.get());
-            }
-            else{
-                throw new DataNotFoundException("Organization with id of "+request.getOrganization_id()+" not found!");
-            }
-        }
-        else{
-            throw new DataNotFoundException("Worker with id of "+id+" not found!");
-        }
-    }
-
-    @Override
-    public boolean HardDeleteWorker(Long id) {
+    public boolean delete(Long id) {
         Optional<Worker> selectedWorker = workerRepository.findById(id);
         if(selectedWorker.isPresent())
         {
@@ -133,11 +109,11 @@ public class WorkerServiceImpl implements WorkerService {
     }
 
     @Override
-    public boolean SoftDeleteWorker(Long id) {
-        Optional<Worker> selectedWorker = workerRepository.findById(id);
+    public boolean inactivate(Long id) {
+        Optional<Worker> selectedWorker = workerRepository.findByIdAndStatus(id,WorkerStatus.ACTIVE);
         if(selectedWorker.isPresent())
         {
-            selectedWorker.get().setDeleted(true);
+            selectedWorker.get().setStatus(WorkerStatus.INACTIVE);
             workerRepository.save(selectedWorker.get());
             return true;
         }
@@ -146,23 +122,37 @@ public class WorkerServiceImpl implements WorkerService {
         }
     }
     @Override
-    public List<WorkerGetResponse> GetWorkers() {
-        List<Worker> workers = workerRepository.findAll();
-        List<WorkerGetResponse> workerGetResponses = new ArrayList<>();
+    public List<WorkerResponse> getWorkers(int pgNum,int pgSize) {
+        Pageable pageable = PageRequest.of(pgNum, pgSize);
+        Page<Worker> workers = workerRepository.findAll(pageable);
+        List<WorkerResponse> workerResponses = new ArrayList<>();
         for(Worker worker : workers)
         {
-            WorkerGetResponse workerGetResponse = WorkerMapper.INSTANCE.workerToWorkerGetResponse(worker);
-            workerGetResponses.add(workerGetResponse);
+            WorkerResponse workerGetResponse = WorkerMapper.INSTANCE.workerToWorkerResponse(worker);
+            workerResponses.add(workerGetResponse);
         }
-        return workerGetResponses;
+        return workerResponses;
     }
 
     @Override
-    public WorkerGetResponse GetWorkerById(Long id) {
-        Optional<Worker> worker = workerRepository.findById(id);
+    public List<WorkerResponse> getActiveWorkers(int pgNum,int pgSize) {
+        Pageable pageable = PageRequest.of(pgNum, pgSize);
+        List<Worker> workers = workerRepository.findByStatus(WorkerStatus.ACTIVE,pageable);
+        List<WorkerResponse> workerResponses = new ArrayList<>();
+        for(Worker worker : workers)
+        {
+            WorkerResponse workerGetResponse = WorkerMapper.INSTANCE.workerToWorkerResponse(worker);
+            workerResponses.add(workerGetResponse);
+        }
+        return workerResponses;
+    }
+
+    @Override
+    public WorkerResponse getWorkerById(Long id) {
+        Optional<Worker> worker = workerRepository.findByIdAndStatus(id, WorkerStatus.ACTIVE);
         if(worker.isPresent())
         {
-            return WorkerMapper.INSTANCE.workerToWorkerGetResponse(worker.get());
+            return WorkerMapper.INSTANCE.workerToWorkerResponse(worker.get());
         }
         else{
             throw new DataNotFoundException("Worker with id of " + id + " is not found!");
@@ -170,14 +160,22 @@ public class WorkerServiceImpl implements WorkerService {
     }
 
     @Override
-    public List<WorkerGetResponse> GetWorkersByOrganizationId(Long id) {
-        List<Worker> workers = workerRepository.findByOrganizationId(id);
-        List<WorkerGetResponse> workerGetResponses = new ArrayList<>();
-        for(Worker worker : workers)
+    public List<WorkerResponse> getWorkersByOrganizationId(Long id,int pgNum,int pgSize) {
+        Optional<Organization> organizationOptional = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE);
+        if(organizationOptional.isPresent())
         {
-            WorkerGetResponse workerGetResponse = WorkerMapper.INSTANCE.workerToWorkerGetResponse(worker);
-            workerGetResponses.add(workerGetResponse);
+            Pageable pageable = PageRequest.of(pgNum, pgSize);
+            List<Worker> workers = workerRepository.findByOrganizationIdAndStatus(id,WorkerStatus.ACTIVE,pageable);
+            List<WorkerResponse> workerGetResponses = new ArrayList<>();
+            for(Worker worker : workers)
+            {
+                WorkerResponse workerGetResponse = WorkerMapper.INSTANCE.workerToWorkerResponse(worker);
+                workerGetResponses.add(workerGetResponse);
+            }
+            return workerGetResponses;
         }
-        return workerGetResponses;
+        else{
+            throw new IllegalArgumentException("Organization with id of "+id+" is not found");
+        }
     }
 }

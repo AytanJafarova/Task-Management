@@ -1,7 +1,7 @@
-package com.tms.TaskManagementSystem.domain;
+package com.tms.TaskManagementSystem.entity;
 
-import com.tms.TaskManagementSystem.enums.TaskDegree;
-import com.tms.TaskManagementSystem.enums.TaskStatus;
+import com.tms.TaskManagementSystem.entity.enums.TaskPriority;
+import com.tms.TaskManagementSystem.entity.enums.TaskStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,7 +22,11 @@ public class Task {
     @Column(unique = true)
     private String header;
     private String content;
-    private TaskDegree degree;
+
+    @Enumerated(EnumType.STRING)
+    private TaskPriority priority;
+
+    @Enumerated(EnumType.STRING)
     private TaskStatus status;
     private LocalDateTime created;
     private LocalDateTime deadline;

@@ -1,5 +1,6 @@
-package com.tms.TaskManagementSystem.domain;
+package com.tms.TaskManagementSystem.entity;
 
+import com.tms.TaskManagementSystem.entity.enums.WorkerStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
@@ -24,11 +25,13 @@ public class Worker {
 
     @Column(unique = true)
     private String email;
-    private boolean isDeleted;
+
+    @Enumerated(EnumType.STRING)
+    private WorkerStatus status;
 
     @ManyToOne
     private Organization organization;
 
-    @OneToMany(mappedBy = "worker",cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "worker", fetch =FetchType.LAZY,cascade = CascadeType.ALL)
     private List<Task> tasks;
 }
