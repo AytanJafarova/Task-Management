@@ -12,8 +12,8 @@ public interface OrganizationService {
     OrganizationResponse update(Long id,UpdateOrganizationRequest request);
     boolean inactivate(Long id);
     boolean delete(Long id);
-    List<OrganizationWorkersResponse> getOrganizations(int pgNum,int pgSize);
+    List<OrganizationResponse> getOrganizations(int pgNum,int pgSize);
     List<OrganizationResponse> getActiveOrganizations(int pgNum,int pgSize);
-    List<OrganizationResponse> getOrganizationsWorkers(int pgNum,int pgSize);
-    OrganizationResponse getOrganizationById(Long id);
+    List<OrganizationWorkersResponse> getOrganizationsWorkers(int pgNum,int pgSize);
+    OrganizationWorkersResponse getOrganizationById(Long id);
 }

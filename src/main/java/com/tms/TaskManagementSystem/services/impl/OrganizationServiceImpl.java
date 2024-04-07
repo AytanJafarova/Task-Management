@@ -98,13 +98,13 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public List<OrganizationWorkersResponse> getOrganizations(int pgNum, int pgSize) {
+    public List<OrganizationResponse> getOrganizations(int pgNum, int pgSize) {
         Pageable pageable = PageRequest.of(pgNum, pgSize);
         Page<Organization> organizationPage = organizationRepository.findAll(pageable);
-        List<OrganizationWorkersResponse> organizationResponses = new ArrayList<>();
+        List<OrganizationResponse> organizationResponses = new ArrayList<>();
         for(Organization organization : organizationPage)
         {
-            OrganizationWorkersResponse organizationResponse = OrganizationMapper.INSTANCE.organizationToOrganizationWorkerResponse(organization);
+            OrganizationResponse organizationResponse = OrganizationMapper.INSTANCE.organizationToOrganizationResponse(organization);
             organizationResponses.add(organizationResponse);
         }
         return organizationResponses;
@@ -124,10 +124,10 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public List<OrganizationResponse> getOrganizationsWorkers(int pgNum,int pgSize) {
+    public List<OrganizationWorkersResponse> getOrganizationsWorkers(int pgNum,int pgSize) {
         Pageable pageable = PageRequest.of(pgNum, pgSize);
         List<Organization> organizationPage = organizationRepository.findAllWithWorkers(pageable);
-        List<OrganizationResponse> organizationResponses = new ArrayList<>();
+        List<OrganizationWorkersResponse> organizationResponses = new ArrayList<>();
         for (Organization organization : organizationPage) {
             List<Worker> workers = organization.getWorkers();
             List<WorkerDTO> workerDTOs = new ArrayList<>();
@@ -143,7 +143,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                         .build();
                 workerDTOs.add(workerdto);
             }
-            OrganizationResponse organizationResponse = OrganizationResponse.builder()
+            OrganizationWorkersResponse organizationResponse = OrganizationWorkersResponse.builder()
                     .name(organization.getName())
                     .id(organization.getId())
                     .status(organization.getStatus())
@@ -156,7 +156,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public OrganizationResponse getOrganizationById(Long id) {
+    public OrganizationWorkersResponse getOrganizationById(Long id) {
         Optional<Organization> organizationOptional = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE);
         if (organizationOptional.isPresent()) {
             Organization organization = organizationOptional.get();
@@ -170,10 +170,11 @@ public class OrganizationServiceImpl implements OrganizationService {
                         .name(worker.getName())
                         .surname(worker.getSurname())
                         .id(worker.getId())
+                        .status(worker.getStatus())
                         .build();
                 workerDTOs.add(workerDTO);
             }
-            return OrganizationResponse.builder()
+            return OrganizationWorkersResponse.builder()
                     .name(organization.getName())
                     .id(organization.getId())
                     .status(organization.getStatus())

@@ -15,6 +15,5 @@ import java.util.List;
 public class OrganizationResponse {
     private Long id;
     private String name;
-    private List<WorkerDTO> workers;
     private OrganizationStatus status;
 }

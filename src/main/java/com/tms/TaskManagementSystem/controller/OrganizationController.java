@@ -51,14 +51,14 @@ public class OrganizationController {
 
     @GetMapping("/{id}")
 //    @ApiOperation(value = "Find Organization by organization id")
-    public ResponseEntity<OrganizationResponse> getOrganization(@PathVariable Long id)
+    public ResponseEntity<OrganizationWorkersResponse> getOrganization(@PathVariable Long id)
     {
             return ResponseEntity.ok(organizationService.getOrganizationById(id));
     }
 
     @GetMapping("/all")
 //    @ApiOperation(value = "Find all Organizations")
-    public ResponseEntity<List<OrganizationWorkersResponse>> getOrganizations(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<OrganizationResponse>> getOrganizations(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
     {
         return ResponseEntity.ok(organizationService.getOrganizations(pageNumber,pageSize));
     }
@@ -72,7 +72,7 @@ public class OrganizationController {
 
     @GetMapping("/workers")
 //    @ApiOperation(value = "Find Organizations with Workers")
-    public ResponseEntity<List<OrganizationResponse>> getOrganizationsWorkers(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<OrganizationWorkersResponse>> getOrganizationsWorkers(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
     {
         return ResponseEntity.ok(organizationService.getOrganizationsWorkers(pageNumber,pageSize));
     }

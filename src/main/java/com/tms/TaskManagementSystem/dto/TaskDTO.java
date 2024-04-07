@@ -16,7 +16,7 @@ public class TaskDTO {
     private Long id;
     private String header;
     private String content;
-    private TaskPriority degree;
+    private TaskPriority priority;
     private TaskStatus status;
     private LocalDateTime created;
     private LocalDateTime deadline;
