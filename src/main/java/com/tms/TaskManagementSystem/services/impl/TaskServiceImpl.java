@@ -108,25 +108,29 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponse assign(Long id,Long workerId) {
-        Optional<Task> selectedTask = taskRepository.findByIdAndStatus(id,TaskStatus.TO_DO);
+        Optional<Task> selectedTask = taskRepository.findById(id);
         Optional<Worker> worker = workerRepository.findByIdAndStatus(workerId, WorkerStatus.ACTIVE);
         if(selectedTask.isPresent())
         {
-            if(worker.isPresent())
-            {
-                selectedTask.get().setWorker(worker.get());
-                selectedTask.get().setStatus(TaskStatus.IN_PROGRESS);
-                taskRepository.save(selectedTask.get());
-                return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
-            }
-            else{
-                throw new DataNotFoundException("Worker with id of "+ workerId+" is not found!");
+            switch (selectedTask.get().getStatus()){
+                case TaskStatus.TO_DO:
+                    if(worker.isPresent()) {
+                        selectedTask.get().setWorker(worker.get());
+                        selectedTask.get().setStatus(TaskStatus.IN_PROGRESS);
+                        taskRepository.save(selectedTask.get());
+                        return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
+                    } else {
+                        throw new DataNotFoundException("Worker with id of " + workerId + " is not found!");
+                    }
+                case TaskStatus.IN_PROGRESS:
+                case TaskStatus.DONE:
+                default:
+                    throw new IllegalArgumentException("Task already assigned");
             }
         }
         else{
             throw new DataNotFoundException("Task with id of "+ id+" is not found!");
         }
-
     }
 
     @Override
@@ -134,15 +138,19 @@ public class TaskServiceImpl implements TaskService {
         Optional<Task> selectedTask = taskRepository.findById(id);
         if(selectedTask.isPresent())
         {
-            if(selectedTask.get().getWorker() != null)
-            {
-                selectedTask.get().setClosed(LocalDateTime.now());
-                selectedTask.get().setStatus(TaskStatus.DONE);
-                taskRepository.save(selectedTask.get());
-                return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
-            }
-            else{
-                throw new IllegalArgumentException("Invalid operation! Task is not assigned!");
+            switch (selectedTask.get().getStatus()){
+                case TaskStatus.IN_PROGRESS: {
+                        selectedTask.get().setClosed(LocalDateTime.now());
+                        selectedTask.get().setStatus(TaskStatus.DONE);
+                        taskRepository.save(selectedTask.get());
+                        return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
+                }
+                case TaskStatus.TO_DO:
+                    throw new IllegalArgumentException("Task is not assigned");
+                case TaskStatus.DONE:
+                    throw new IllegalArgumentException("Task already closed");
+                default:
+                    throw new IllegalArgumentException("Invalid operation!");
             }
         }
         else{
