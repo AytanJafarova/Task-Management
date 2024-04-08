@@ -6,6 +6,7 @@ import com.tms.TaskManagementSystem.entity.enums.OrganizationStatus;
 import com.tms.TaskManagementSystem.entity.enums.WorkerStatus;
 import com.tms.TaskManagementSystem.exception.DataNotFoundException;
 import com.tms.TaskManagementSystem.exception.IllegalArgumentException;
+import com.tms.TaskManagementSystem.exception.response.ResponseMessage;
 import com.tms.TaskManagementSystem.mappers.OrganizationMapper;
 import com.tms.TaskManagementSystem.mappers.WorkerMapper;
 import com.tms.TaskManagementSystem.repository.OrganizationRepository;
@@ -32,7 +33,15 @@ public class WorkerServiceImpl implements WorkerService {
 
     boolean checkingUserCredentials(String username, String password, boolean ignoreUsername) {
         Optional<Worker> workerSelect = workerRepository.findByUsername(username.toLowerCase());
-        return !username.isBlank() && !password.isBlank() && password.length() >= 8 && workerSelect.isEmpty();
+        if(username.isBlank() || password.isBlank() || password.length()<8)
+        {
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_USERNAME_PASSWORD);
+        }
+        else if(workerSelect.isPresent())
+        {
+            throw new IllegalArgumentException(ResponseMessage.ERROR_USERNAME_EXISTS);
+        }
+        return true;
     }
     @Override
     public WorkerResponse save(CreateWorkerRequest request) {
@@ -61,11 +70,11 @@ public class WorkerServiceImpl implements WorkerService {
                         .build();
             }
             else{
-                throw new DataNotFoundException("Organization with id of "+request.getOrganization_id()+" is not found!");
+                throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
             }
         }
         else{
-            throw new IllegalArgumentException("Invalid operation!");
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
         }
     }
 
@@ -90,10 +99,10 @@ public class WorkerServiceImpl implements WorkerService {
                 return WorkerMapper.INSTANCE.workerToWorkerResponse(selectedWorker.get());
             }
             else{
-                throw new IllegalArgumentException("Invalid operation!");
+                throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
             }
         }
-        throw new DataNotFoundException("Worker with id of " + id + " is not found!");
+        throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
     }
     @Override
     public boolean delete(Long id) {
@@ -104,7 +113,7 @@ public class WorkerServiceImpl implements WorkerService {
             return true;
         }
         else{
-            throw new DataNotFoundException("Worker with id of "+ id+" is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
         }
     }
 
@@ -118,7 +127,7 @@ public class WorkerServiceImpl implements WorkerService {
             return true;
         }
         else{
-            throw new DataNotFoundException("Worker with id of "+ id+" is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
         }
     }
     @Override
@@ -155,7 +164,7 @@ public class WorkerServiceImpl implements WorkerService {
             return WorkerMapper.INSTANCE.workerToWorkerResponse(worker.get());
         }
         else{
-            throw new DataNotFoundException("Worker with id of " + id + " is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
         }
     }
 
@@ -175,7 +184,7 @@ public class WorkerServiceImpl implements WorkerService {
             return workerGetResponses;
         }
         else{
-            throw new IllegalArgumentException("Organization with id of "+id+" is not found");
+            throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
         }
     }
 }

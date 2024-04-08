@@ -6,6 +6,7 @@ import com.tms.TaskManagementSystem.entity.Worker;
 import com.tms.TaskManagementSystem.entity.enums.OrganizationStatus;
 import com.tms.TaskManagementSystem.exception.DataNotFoundException;
 import com.tms.TaskManagementSystem.exception.IllegalArgumentException;
+import com.tms.TaskManagementSystem.exception.response.ResponseMessage;
 import com.tms.TaskManagementSystem.mappers.OrganizationMapper;
 import com.tms.TaskManagementSystem.repository.OrganizationRepository;
 import com.tms.TaskManagementSystem.request.Organization.CreateOrganizationRequest;
@@ -31,7 +32,15 @@ public class OrganizationServiceImpl implements OrganizationService {
     boolean checkingName(String name)
     {
         Optional<Organization> organization = organizationRepository.findByName(name.toLowerCase());
-        return !name.isBlank() && organization.isEmpty();
+        if(name.isBlank())
+        {
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_ORGANIZATION_NAME);
+        }
+        else if(organization.isPresent())
+        {
+            throw new IllegalArgumentException(ResponseMessage.ERROR_ORGANIZATION_EXISTS);
+        }
+        return true;
     }
 
     @Override
@@ -47,7 +56,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                     .build();
         }
         else{
-            throw new IllegalArgumentException("Invalid operation!");
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
         }
     }
 
@@ -64,10 +73,10 @@ public class OrganizationServiceImpl implements OrganizationService {
                 return OrganizationMapper.INSTANCE.organizationToOrganizationResponse(selectedOrganization.get());
             }
             else{
-                throw new IllegalArgumentException("Invalid operation!");
+                throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
             }
         }
-        throw new DataNotFoundException("Organization with id of" + id + "is not found!");
+        throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
     }
 
     @Override
@@ -80,7 +89,7 @@ public class OrganizationServiceImpl implements OrganizationService {
             return true;
         }
         else{
-            throw new DataNotFoundException("Organization with id of "+id+" is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
         }
     }
 
@@ -93,7 +102,7 @@ public class OrganizationServiceImpl implements OrganizationService {
             return true;
         }
         else{
-            throw new DataNotFoundException("Organization with id of "+id+" is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
         }
     }
 
@@ -181,7 +190,7 @@ public class OrganizationServiceImpl implements OrganizationService {
                     .workers(workerDTOs)
                     .build();
         } else {
-            throw new DataNotFoundException("Organization with id of " + id + " is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
         }
     }
 }

@@ -7,6 +7,7 @@ import com.tms.TaskManagementSystem.entity.enums.TaskStatus;
 import com.tms.TaskManagementSystem.entity.enums.WorkerStatus;
 import com.tms.TaskManagementSystem.exception.DataNotFoundException;
 import com.tms.TaskManagementSystem.exception.IllegalArgumentException;
+import com.tms.TaskManagementSystem.exception.response.ResponseMessage;
 import com.tms.TaskManagementSystem.mappers.TaskMapper;
 import com.tms.TaskManagementSystem.repository.TaskRepository;
 import com.tms.TaskManagementSystem.repository.WorkerRepository;
@@ -31,7 +32,15 @@ public class TaskServiceImpl implements TaskService {
     private final WorkerRepository workerRepository;
     boolean checkingTaskInfo(String header, boolean ignoreHeader) {
         Optional<Task> taskSelect = taskRepository.findByHeader(header.toLowerCase());
-        return !header.isBlank() && taskSelect.isEmpty();
+        if(header.isBlank())
+        {
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_TASK_HEADER);
+        }
+        else if(taskSelect.isPresent())
+        {
+            throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_ALREADY_EXISTS);
+        }
+        return true;
     }
     List<TaskResponse> getByStatus(TaskStatus status,int pgNum,int pgSize)
     {
@@ -70,11 +79,11 @@ public class TaskServiceImpl implements TaskService {
             }
             catch (Exception e)
             {
-                throw new DataNotFoundException("Degree with int value of "+request.getPriority()+ " is not found");
+                throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_PRIORITY_PROVIDED);
             }
         }
         else{
-            throw new IllegalArgumentException("Invalid operation!");
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
         }
     }
 
@@ -98,11 +107,11 @@ public class TaskServiceImpl implements TaskService {
                 return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
             }
             else{
-                throw new IllegalArgumentException("Invalid operation!");
+                throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
             }
         }
         else{
-            throw new DataNotFoundException("Task with id of "+ id+" is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
         }
     }
 
@@ -120,16 +129,16 @@ public class TaskServiceImpl implements TaskService {
                         taskRepository.save(selectedTask.get());
                         return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
                     } else {
-                        throw new DataNotFoundException("Worker with id of " + workerId + " is not found!");
+                        throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
                     }
                 case TaskStatus.IN_PROGRESS:
                 case TaskStatus.DONE:
                 default:
-                    throw new IllegalArgumentException("Task already assigned");
+                    throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_ASSIGNED);
             }
         }
         else{
-            throw new DataNotFoundException("Task with id of "+ id+" is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
         }
     }
 
@@ -146,15 +155,15 @@ public class TaskServiceImpl implements TaskService {
                         return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
                 }
                 case TaskStatus.TO_DO:
-                    throw new IllegalArgumentException("Task is not assigned");
+                    throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_NOT_ASSIGNED);
                 case TaskStatus.DONE:
-                    throw new IllegalArgumentException("Task already closed");
+                    throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_CLOSED);
                 default:
-                    throw new IllegalArgumentException("Invalid operation!");
+                    throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
             }
         }
         else{
-            throw new DataNotFoundException("Task with id of "+ id+" is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
         }
     }
 
@@ -167,7 +176,7 @@ public class TaskServiceImpl implements TaskService {
             return true;
         }
         else{
-            throw new DataNotFoundException("Task with id of "+ id+" is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
         }
     }
 
@@ -183,11 +192,11 @@ public class TaskServiceImpl implements TaskService {
             }
 
              else{
-                 throw new IllegalArgumentException("Deadline is not specified");
+                 throw new IllegalArgumentException(ResponseMessage.ERROR_DEADLINE_NOT_SPECIFIED);
             }
         }
         else{
-            throw new DataNotFoundException("Task with id of " + id + " is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
         }
     }
 
@@ -217,7 +226,7 @@ public class TaskServiceImpl implements TaskService {
             return TaskMapper.INSTANCE.taskToTaskResponse(task.get());
         }
         else{
-            throw new DataNotFoundException("Task with id of " + id + " is not found!");
+            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
         }
     }
     @Override
@@ -236,7 +245,7 @@ public class TaskServiceImpl implements TaskService {
             return taskResponses;
         }
         else{
-            throw new DataNotFoundException("Worker with the id of "+id+" is not found");
+            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
         }
     }
 
