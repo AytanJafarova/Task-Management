@@ -3,8 +3,10 @@ package com.tms.TaskManagementSystem.controller;
 import com.tms.TaskManagementSystem.request.Task.*;
 import com.tms.TaskManagementSystem.response.Task.TaskResponse;
 import com.tms.TaskManagementSystem.services.TaskService;
+import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,92 +14,91 @@ import java.util.List;
 @RestController
 @RequestMapping("/tasks")
 @RequiredArgsConstructor
-//@Api("Task Operations")
 public class TaskController {
     private final TaskService taskService;
 
     @PostMapping("/save")
     @ResponseStatus(HttpStatus.CREATED)
-//    @ApiOperation(value = "Creating new Task")
-    public TaskResponse save(@RequestBody CreateTaskRequest request)
+    @Operation(summary = "Creating new Task")
+    public ResponseEntity<TaskResponse> save(@RequestBody CreateTaskRequest request)
     {
-        return taskService.save(request);
+        return ResponseEntity.ok(taskService.save(request));
     }
 
     @GetMapping("/{id}")
-//    @ApiOperation(value = "Find Task by task id")
-    public TaskResponse getTaskByID(@PathVariable Long id)
+    @Operation(summary = "Find Task by task id")
+    public ResponseEntity<TaskResponse> getTaskByID(@PathVariable Long id)
     {
-        return taskService.getTaskById(id);
+        return ResponseEntity.ok(taskService.getTaskById(id));
     }
 
     @GetMapping()
-//    @ApiOperation(value = "Find all tasks")
-    public List<TaskResponse> getTasks(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    @Operation(summary = "Find all tasks")
+    public ResponseEntity<List<TaskResponse>> getTasks(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
     {
-        return taskService.getTasks(pageNumber, pageSize);
+        return ResponseEntity.ok(taskService.getTasks(pageNumber, pageSize));
     }
 
     @GetMapping("/worker/{id}")
-//    @ApiOperation(value = "Find Tasks by worker id")
-    public List<TaskResponse> getByWorkerID(@PathVariable Long id,@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    @Operation(summary = "Find Tasks by worker id")
+    public ResponseEntity<List<TaskResponse>> getByWorkerID(@PathVariable Long id,@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
     {
-        return taskService.getByWorkerId(id, pageNumber, pageSize);
+        return ResponseEntity.ok(taskService.getByWorkerId(id, pageNumber, pageSize));
     }
 
     @GetMapping("/closed")
-//    @ApiOperation(value = "Find all closed tasks")
-    public List<TaskResponse> getClosedTasks(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    @Operation(summary = "Find all closed tasks")
+    public ResponseEntity<List<TaskResponse>> getClosedTasks(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
     {
-        return taskService.getClosed(pageNumber, pageSize);
+        return ResponseEntity.ok(taskService.getClosed(pageNumber, pageSize));
     }
 
     @GetMapping("/progress")
-//    @ApiOperation(value = "Find all Tasks in progress")
-    public List<TaskResponse> getInProgress(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    @Operation(summary = "Find all Tasks in progress")
+    public ResponseEntity<List<TaskResponse>> getInProgress(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
     {
-        return taskService.getInprogress(pageNumber, pageSize);
+        return ResponseEntity.ok(taskService.getInprogress(pageNumber, pageSize));
     }
 
     @GetMapping("/todo")
-//    @ApiOperation(value = "Find all Tasks in ToDo")
-    public List<TaskResponse> getTodo(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    @Operation(summary = "Find all Tasks in ToDo")
+    public ResponseEntity<List<TaskResponse>> getTodo(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
     {
-        return taskService.getTodo(pageNumber, pageSize);
+        return ResponseEntity.ok(taskService.getTodo(pageNumber, pageSize));
     }
 
     @GetMapping("/arrived/{id}")
-//    @ApiOperation(value = "Check if deadline arrived for task")
-    public boolean arrived(@PathVariable Long id)
+    @Operation(summary = "Check if deadline arrived for task")
+    public ResponseEntity<Boolean> arrived(@PathVariable Long id)
     {
-        return taskService.arrived(id);
+        return ResponseEntity.ok(taskService.arrived(id));
     }
 
     @DeleteMapping("/delete/{id}")
-//    @ApiOperation(value = "Delete Task by task id")
-    public boolean delete(@PathVariable Long id)
+    @Operation(summary = "Delete Task by task id")
+    public ResponseEntity<Boolean> delete(@PathVariable Long id)
     {
-        return taskService.delete(id);
+        return ResponseEntity.ok(taskService.delete(id));
     }
 
     @PutMapping("/close/{id}")
-//    @ApiOperation(value = "Close Task")
-    public TaskResponse close(@PathVariable Long id)
+    @Operation(summary = "Close Task")
+    public ResponseEntity<TaskResponse> close(@PathVariable Long id)
     {
-        return taskService.close(id);
+        return ResponseEntity.ok(taskService.close(id));
     }
 
     @PutMapping("/update/{id}")
-//    @ApiOperation(value = "Update Task by task id")
-    public TaskResponse update(@PathVariable Long id,@RequestBody UpdateTaskRequest request)
+    @Operation(summary = "Update Task by task id")
+    public ResponseEntity<TaskResponse> update(@PathVariable Long id,@RequestBody UpdateTaskRequest request)
     {
-        return taskService.update(id,request);
+        return ResponseEntity.ok(taskService.update(id,request));
     }
 
     @PutMapping("/assign/{id}/{workerId}")
-//    @ApiOperation(value = "Assign Task to worker")
-    public TaskResponse assign(@PathVariable Long id,@PathVariable Long workerId)
+    @Operation(summary = "Assign Task to worker")
+    public ResponseEntity<TaskResponse> assign(@PathVariable Long id,@PathVariable Long workerId)
     {
-        return taskService.assign(id,workerId);
+        return ResponseEntity.ok(taskService.assign(id,workerId));
     }
 }
