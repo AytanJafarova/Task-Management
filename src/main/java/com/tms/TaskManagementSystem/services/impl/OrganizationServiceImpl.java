@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -31,15 +32,13 @@ public class OrganizationServiceImpl implements OrganizationService {
     private final OrganizationRepository organizationRepository;
     boolean checkingName(String name)
     {
-        Optional<Organization> organization = organizationRepository.findByName(name.toLowerCase());
-        if(name.isBlank())
-        {
+        if (name.isBlank()) {
             throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_ORGANIZATION_NAME);
         }
-        else if(organization.isPresent())
-        {
-            throw new IllegalArgumentException(ResponseMessage.ERROR_ORGANIZATION_EXISTS);
-        }
+        organizationRepository.findByName(name.toLowerCase())
+                .ifPresent(org -> {
+                    throw new IllegalArgumentException(ResponseMessage.ERROR_ORGANIZATION_EXISTS);
+                });
         return true;
     }
 
@@ -63,53 +62,39 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public OrganizationResponse update(Long id,UpdateOrganizationRequest request) {
 
-        Optional<Organization> selectedOrganization = organizationRepository.findById(id);
-        if(selectedOrganization.isPresent())
+        Organization organization = organizationRepository.findById(id)
+                .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
+        if(checkingName(request.getName()))
         {
-            if(checkingName(request.getName()))
-            {
-                selectedOrganization.get().setName(request.getName());
-                organizationRepository.save(selectedOrganization.get());
-                return OrganizationMapper.INSTANCE.organizationToOrganizationResponse(selectedOrganization.get());
-            }
-            else{
-                throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
-            }
+            organization.setName(request.getName());
+            organizationRepository.save(organization);
+            return OrganizationMapper.INSTANCE.organizationToOrganizationResponse(organization);
         }
-        throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
+        else{
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
+        }
     }
 
     @Override
     public boolean inactivate(Long id) {
-        Optional<Organization> selectedOrganization = organizationRepository.findByIdAndStatus(id, OrganizationStatus.ACTIVE);
-        if(selectedOrganization.isPresent())
-        {
-            selectedOrganization.get().setStatus(OrganizationStatus.INACTIVE);
-            organizationRepository.save(selectedOrganization.get());
-            return true;
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
-        }
+        Organization organization = organizationRepository.findById(id)
+                .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
+        organization.setStatus(OrganizationStatus.INACTIVE);
+        organizationRepository.save(organization);
+        return true;
     }
 
     @Override
     public boolean delete(Long id) {
-        Optional<Organization> selectedOrganization = organizationRepository.findById(id);
-        if(selectedOrganization.isPresent())
-        {
-            organizationRepository.delete(selectedOrganization.get());
-            return true;
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
-        }
+        Organization organization = organizationRepository.findById(id)
+                .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
+        organizationRepository.delete(organization);
+        return true;
     }
 
     @Override
-    public List<OrganizationResponse> getOrganizations(int pgNum, int pgSize) {
-        Pageable pageable = PageRequest.of(pgNum, pgSize);
-        Page<Organization> organizationPage = organizationRepository.findAll(pageable);
+    public List<OrganizationResponse> getOrganizations(Pageable pageable) {
+        Page<Organization> organizationPage = organizationRepository.findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         List<OrganizationResponse> organizationResponses = new ArrayList<>();
         for(Organization organization : organizationPage)
         {
@@ -120,9 +105,8 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public List<OrganizationResponse> getActiveOrganizations(int pgNum, int pgSize) {
-        Pageable pageable = PageRequest.of(pgNum, pgSize);
-        List<Organization> organizationPage = organizationRepository.findByStatus(OrganizationStatus.ACTIVE, pageable);
+    public List<OrganizationResponse> getActiveOrganizations(Pageable pageable) {
+        List<Organization> organizationPage = organizationRepository.findByStatus(OrganizationStatus.ACTIVE, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         List<OrganizationResponse> organizationResponses = new ArrayList<>();
         for(Organization organization : organizationPage)
         {
@@ -133,9 +117,8 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public List<OrganizationWorkersResponse> getOrganizationsWorkers(int pgNum,int pgSize) {
-        Pageable pageable = PageRequest.of(pgNum, pgSize);
-        List<Organization> organizationPage = organizationRepository.findAllWithWorkers(pageable);
+    public List<OrganizationWorkersResponse> getOrganizationsWorkers(Pageable pageable) {
+        List<Organization> organizationPage = organizationRepository.findAllWithWorkers(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         List<OrganizationWorkersResponse> organizationResponses = new ArrayList<>();
         for (Organization organization : organizationPage) {
             List<Worker> workers = organization.getWorkers();
@@ -166,9 +149,9 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public OrganizationWorkersResponse getOrganizationById(Long id) {
-        Optional<Organization> organizationOptional = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE);
-        if (organizationOptional.isPresent()) {
-            Organization organization = organizationOptional.get();
+        Organization organization  = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE)
+                .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
+
             List<Worker> workers = organization.getWorkers();
             List<WorkerDTO> workerDTOs = new ArrayList<>();
             for (Worker worker : workers) {
@@ -189,8 +172,5 @@ public class OrganizationServiceImpl implements OrganizationService {
                     .status(organization.getStatus())
                     .workers(workerDTOs)
                     .build();
-        } else {
-            throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
-        }
     }
 }

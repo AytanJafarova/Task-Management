@@ -7,6 +7,8 @@ import com.tms.TaskManagementSystem.response.Organization.OrganizationWorkersRes
 import com.tms.TaskManagementSystem.services.OrganizationService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,10 +23,11 @@ public class OrganizationController {
 
     @PostMapping("/save")
     @Operation(summary = "Creating new Organization")
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<OrganizationResponse> save(@RequestBody CreateOrganizationRequest request)
     {
-        return ResponseEntity.ok(organizationService.save(request));
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(organizationService.save(request));
     }
 
     @PutMapping("update/{id}")
@@ -57,22 +60,22 @@ public class OrganizationController {
 
     @GetMapping("/all")
     @Operation(summary = "Find all Organizations")
-    public ResponseEntity<List<OrganizationResponse>> getOrganizations(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<OrganizationResponse>> getOrganizations(Pageable pageable)
     {
-        return ResponseEntity.ok(organizationService.getOrganizations(pageNumber,pageSize));
+        return ResponseEntity.ok(organizationService.getOrganizations(pageable));
     }
 
     @GetMapping("")
     @Operation(summary = "Find all active Organizations")
-    public ResponseEntity<List<OrganizationResponse>> getActiveOrganizations(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<OrganizationResponse>> getActiveOrganizations(Pageable pageable)
     {
-        return ResponseEntity.ok(organizationService.getActiveOrganizations(pageNumber,pageSize));
+        return ResponseEntity.ok(organizationService.getActiveOrganizations(pageable));
     }
 
     @GetMapping("/workers")
     @Operation(summary = "Find Organizations with Workers")
-    public ResponseEntity<List<OrganizationWorkersResponse>> getOrganizationsWorkers(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<OrganizationWorkersResponse>> getOrganizationsWorkers(Pageable pageable)
     {
-        return ResponseEntity.ok(organizationService.getOrganizationsWorkers(pageNumber,pageSize));
+        return ResponseEntity.ok(organizationService.getOrganizationsWorkers(pageable));
     }
 }

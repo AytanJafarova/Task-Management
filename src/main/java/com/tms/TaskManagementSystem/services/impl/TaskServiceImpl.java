@@ -31,21 +31,19 @@ public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final WorkerRepository workerRepository;
     boolean checkingTaskInfo(String header, boolean ignoreHeader) {
-        Optional<Task> taskSelect = taskRepository.findByHeader(header.toLowerCase());
-        if(header.isBlank())
-        {
+        if (header.isBlank()) {
             throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_TASK_HEADER);
         }
-        else if(taskSelect.isPresent())
-        {
-            throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_ALREADY_EXISTS);
-        }
+
+        taskRepository.findByHeader(header.toLowerCase())
+                .ifPresent(task -> {
+                    throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_ALREADY_EXISTS);
+                });
         return true;
     }
-    List<TaskResponse> getByStatus(TaskStatus status,int pgNum,int pgSize)
+    List<TaskResponse> getByStatus(TaskStatus status,Pageable pageable)
     {
-        Pageable pageable = PageRequest.of(pgNum, pgSize);
-        List<Task> tasks = taskRepository.findByStatus(status,pageable);
+        List<Task> tasks = taskRepository.findByStatus(status,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         List<TaskResponse> taskResponses = new ArrayList<>();
         for(Task task : tasks)
         {
@@ -89,70 +87,57 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public TaskResponse update(Long id,UpdateTaskRequest request) {
-        Optional<Task> selectedTask = taskRepository.findById(id);
-        boolean ignoreHeader=false;
-        if(selectedTask.isPresent())
+        Task task = taskRepository.findById(id)
+                .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
+        boolean ignoreHeader= task.getHeader().equalsIgnoreCase(request.getHeader());
+
+        if(checkingTaskInfo(request.getHeader(), ignoreHeader))
         {
-            if(selectedTask.get().getHeader().equalsIgnoreCase(request.getHeader()))
-            {
-                ignoreHeader=true;
-            }
-            if(checkingTaskInfo(request.getHeader(), ignoreHeader))
-            {
-                selectedTask.get().setHeader(request.getHeader().toLowerCase());
-                selectedTask.get().setContent(request.getContent().toLowerCase());
-                selectedTask.get().setDeadline(request.getDeadline());
-                selectedTask.get().setPriority(request.getPriority());
-                taskRepository.save(selectedTask.get());
-                return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
-            }
-            else{
-                throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
-            }
+            task.setHeader(request.getHeader().toLowerCase());
+            task.setContent(request.getContent().toLowerCase());
+            task.setDeadline(request.getDeadline());
+            task.setPriority(request.getPriority());
+            taskRepository.save(task);
+            return TaskMapper.INSTANCE.taskToTaskResponse(task);
         }
         else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
         }
     }
 
     @Override
     public TaskResponse assign(Long id,Long workerId) {
-        Optional<Task> selectedTask = taskRepository.findById(id);
-        Optional<Worker> worker = workerRepository.findByIdAndStatus(workerId, WorkerStatus.ACTIVE);
-        if(selectedTask.isPresent())
-        {
-            switch (selectedTask.get().getStatus()){
+        Task selectedTask = taskRepository.findById(id)
+                .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
+
+        Worker worker = workerRepository.findByIdAndStatus(workerId, WorkerStatus.ACTIVE)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
+
+        switch (selectedTask.getStatus()){
                 case TaskStatus.TO_DO:
-                    if(worker.isPresent()) {
-                        selectedTask.get().setWorker(worker.get());
-                        selectedTask.get().setStatus(TaskStatus.IN_PROGRESS);
-                        taskRepository.save(selectedTask.get());
-                        return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
-                    } else {
-                        throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
-                    }
+                    selectedTask.setWorker(worker);
+                    selectedTask.setStatus(TaskStatus.IN_PROGRESS);
+                    taskRepository.save(selectedTask);
+                    return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask);
+
                 case TaskStatus.IN_PROGRESS:
                 case TaskStatus.DONE:
                 default:
                     throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_ASSIGNED);
-            }
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
         }
     }
 
     @Override
     public TaskResponse close(Long id) {
-        Optional<Task> selectedTask = taskRepository.findById(id);
-        if(selectedTask.isPresent())
-        {
-            switch (selectedTask.get().getStatus()){
+        Task selectedTask = taskRepository.findById(id)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
+
+        switch (selectedTask.getStatus()){
                 case TaskStatus.IN_PROGRESS: {
-                        selectedTask.get().setClosed(LocalDateTime.now());
-                        selectedTask.get().setStatus(TaskStatus.DONE);
-                        taskRepository.save(selectedTask.get());
-                        return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask.get());
+                        selectedTask.setClosed(LocalDateTime.now());
+                        selectedTask.setStatus(TaskStatus.DONE);
+                        taskRepository.save(selectedTask);
+                        return TaskMapper.INSTANCE.taskToTaskResponse(selectedTask);
                 }
                 case TaskStatus.TO_DO:
                     throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_NOT_ASSIGNED);
@@ -161,49 +146,33 @@ public class TaskServiceImpl implements TaskService {
                 default:
                     throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
             }
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
-        }
     }
 
     @Override
     public boolean delete(Long id) {
-        Optional<Task> selectedTask = taskRepository.findById(id);
-        if(selectedTask.isPresent())
-        {
-            taskRepository.delete(selectedTask.get());
-            return true;
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
-        }
+        Task selectedTask = taskRepository.findById(id)
+                .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
+        taskRepository.delete(selectedTask);
+        return true;
     }
 
     @Override
     public boolean arrived(Long id) {
-        Optional<Task> task = taskRepository.findById(id);
-        if(task.isPresent())
+        Task task = taskRepository.findById(id)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
+        LocalDateTime now = LocalDateTime.now();
+        if(task.getDeadline() !=null)
         {
-            LocalDateTime now = LocalDateTime.now();
-            if(task.get().getDeadline() !=null)
-            {
-                return task.get().getDeadline().isBefore(now); // if true => Deadline arrived
-            }
-
-             else{
-                 throw new IllegalArgumentException(ResponseMessage.ERROR_DEADLINE_NOT_SPECIFIED);
-            }
+            return task.getDeadline().isBefore(now); // if true => Deadline arrived
         }
         else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
+            throw new IllegalArgumentException(ResponseMessage.ERROR_DEADLINE_NOT_SPECIFIED);
         }
     }
 
     @Override
-    public List<TaskResponse> getTasks(int pgNum,int pgSize) {
-        Pageable pageable = PageRequest.of(pgNum, pgSize);
-        Page<Task> tasks = taskRepository.findAll(pageable);
+    public List<TaskResponse> getTasks(Pageable pageable) {
+        Page<Task> tasks = taskRepository.findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         List<TaskResponse> taskResponses = new ArrayList<>();
         for(Task task : tasks)
         {
@@ -214,48 +183,38 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<TaskResponse> getInprogress(int pgNum,int pgSize) {
-        return getByStatus(TaskStatus.IN_PROGRESS,pgNum, pgSize);
+    public List<TaskResponse> getInprogress(Pageable pageable) {
+        return getByStatus(TaskStatus.IN_PROGRESS,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
     }
 
     @Override
     public TaskResponse getTaskById(Long id) {
-        Optional<Task> task = taskRepository.findById(id);
-        if(task.isPresent())
-        {
-            return TaskMapper.INSTANCE.taskToTaskResponse(task.get());
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
-        }
+        Task task = taskRepository.findById(id)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
+        return TaskMapper.INSTANCE.taskToTaskResponse(task);
     }
     @Override
-    public List<TaskResponse> getByWorkerId(Long id,int pgNum,int pgSize) {
-        Optional<Worker> worker = workerRepository.findByIdAndStatus(id, WorkerStatus.ACTIVE);
-        Pageable pageable = PageRequest.of(pgNum, pgSize);
-        if(worker.isPresent())
+    public List<TaskResponse> getByWorkerId(Long id,Pageable pageable) {
+        Worker worker = workerRepository.findByIdAndStatus(id, WorkerStatus.ACTIVE)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
+
+        List<Task> tasks = taskRepository.findByWorkerId(id,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        List<TaskResponse> taskResponses = new ArrayList<>();
+        for(Task task : tasks)
         {
-            List<Task> tasks = taskRepository.findByWorkerId(id,pageable);
-            List<TaskResponse> taskResponses = new ArrayList<>();
-            for(Task task : tasks)
-            {
-                TaskResponse taskResponse = TaskMapper.INSTANCE.taskToTaskResponse(task);
-                taskResponses.add(taskResponse);
-            }
-            return taskResponses;
+            TaskResponse taskResponse = TaskMapper.INSTANCE.taskToTaskResponse(task);
+            taskResponses.add(taskResponse);
         }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID);
-        }
+        return taskResponses;
     }
 
     @Override
-    public List<TaskResponse> getClosed(int pgNum,int pgSize) {
-        return getByStatus(TaskStatus.DONE,pgNum,pgSize);
+    public List<TaskResponse> getClosed(Pageable pageable) {
+        return getByStatus(TaskStatus.DONE,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
     }
 
     @Override
-    public List<TaskResponse> getTodo(int pgNum,int pgSize) {
-        return getByStatus(TaskStatus.TO_DO,pgNum,pgSize);
+    public List<TaskResponse> getTodo(Pageable pageable) {
+        return getByStatus(TaskStatus.TO_DO,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
     }
 }

@@ -5,6 +5,7 @@ import com.tms.TaskManagementSystem.response.Task.TaskResponse;
 import com.tms.TaskManagementSystem.services.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,37 +35,37 @@ public class TaskController {
 
     @GetMapping()
     @Operation(summary = "Find all tasks")
-    public ResponseEntity<List<TaskResponse>> getTasks(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<TaskResponse>> getTasks(Pageable pageable)
     {
-        return ResponseEntity.ok(taskService.getTasks(pageNumber, pageSize));
+        return ResponseEntity.ok(taskService.getTasks(pageable));
     }
 
     @GetMapping("/worker/{id}")
     @Operation(summary = "Find Tasks by worker id")
-    public ResponseEntity<List<TaskResponse>> getByWorkerID(@PathVariable Long id,@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<TaskResponse>> getByWorkerID(Long id,Pageable pageable)
     {
-        return ResponseEntity.ok(taskService.getByWorkerId(id, pageNumber, pageSize));
+        return ResponseEntity.ok(taskService.getByWorkerId(id,pageable));
     }
 
     @GetMapping("/closed")
     @Operation(summary = "Find all closed tasks")
-    public ResponseEntity<List<TaskResponse>> getClosedTasks(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<TaskResponse>> getClosedTasks(Pageable pageable)
     {
-        return ResponseEntity.ok(taskService.getClosed(pageNumber, pageSize));
+        return ResponseEntity.ok(taskService.getClosed(pageable));
     }
 
     @GetMapping("/progress")
     @Operation(summary = "Find all Tasks in progress")
-    public ResponseEntity<List<TaskResponse>> getInProgress(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<TaskResponse>> getInProgress(Pageable pageable)
     {
-        return ResponseEntity.ok(taskService.getInprogress(pageNumber, pageSize));
+        return ResponseEntity.ok(taskService.getInprogress(pageable));
     }
 
     @GetMapping("/todo")
     @Operation(summary = "Find all Tasks in ToDo")
-    public ResponseEntity<List<TaskResponse>> getTodo(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<TaskResponse>> getTodo(Pageable pageable)
     {
-        return ResponseEntity.ok(taskService.getTodo(pageNumber, pageSize));
+        return ResponseEntity.ok(taskService.getTodo(pageable));
     }
 
     @GetMapping("/arrived/{id}")

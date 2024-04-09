@@ -6,6 +6,7 @@ import com.tms.TaskManagementSystem.response.Worker.WorkerResponse;
 import com.tms.TaskManagementSystem.services.WorkerService;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,16 +28,16 @@ public class WorkerController {
     }
     @GetMapping("/all")
     @Operation(summary = "Find all workers")
-    public ResponseEntity<List<WorkerResponse>> getWorkers(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<WorkerResponse>> getWorkers(Pageable pageable)
     {
-        return ResponseEntity.ok(workerService.getWorkers(pageNumber, pageSize));
+        return ResponseEntity.ok(workerService.getWorkers(pageable));
     }
 
     @GetMapping("")
     @Operation(summary = "Find active workers")
-    public ResponseEntity<List<WorkerResponse>> getActiveWorkers(@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<WorkerResponse>> getActiveWorkers(Pageable pageable)
     {
-        return ResponseEntity.ok(workerService.getActiveWorkers(pageNumber, pageSize));
+        return ResponseEntity.ok(workerService.getActiveWorkers(pageable));
     }
 
     @GetMapping("/{id}")
@@ -47,9 +48,9 @@ public class WorkerController {
     }
     @GetMapping("/organization/{id}")
     @Operation(summary = "Find Workers by organization id")
-    public ResponseEntity<List<WorkerResponse>> getWorkersByOrganizationId(@PathVariable Long id,@RequestParam(defaultValue = "0") int pageNumber,@RequestParam(defaultValue = "10") int pageSize)
+    public ResponseEntity<List<WorkerResponse>> getWorkersByOrganizationId(@PathVariable Long id,Pageable pageable)
     {
-        return ResponseEntity.ok(workerService.getWorkersByOrganizationId(id,pageNumber, pageSize));
+        return ResponseEntity.ok(workerService.getWorkersByOrganizationId(id,pageable));
     }
     @PutMapping("/update/{id}")
     @Operation(summary = "Update Worker by worker id")

@@ -4,6 +4,7 @@ import com.tms.TaskManagementSystem.request.Organization.CreateOrganizationReque
 import com.tms.TaskManagementSystem.request.Organization.UpdateOrganizationRequest;
 import com.tms.TaskManagementSystem.response.Organization.OrganizationResponse;
 import com.tms.TaskManagementSystem.response.Organization.OrganizationWorkersResponse;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -12,8 +13,8 @@ public interface OrganizationService {
     OrganizationResponse update(Long id,UpdateOrganizationRequest request);
     boolean inactivate(Long id);
     boolean delete(Long id);
-    List<OrganizationResponse> getOrganizations(int pgNum,int pgSize);
-    List<OrganizationResponse> getActiveOrganizations(int pgNum,int pgSize);
-    List<OrganizationWorkersResponse> getOrganizationsWorkers(int pgNum,int pgSize);
+    List<OrganizationResponse> getOrganizations(Pageable pageable);
+    List<OrganizationResponse> getActiveOrganizations(Pageable pageable);
+    List<OrganizationWorkersResponse> getOrganizationsWorkers(Pageable pageable);
     OrganizationWorkersResponse getOrganizationById(Long id);
 }

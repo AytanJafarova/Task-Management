@@ -16,6 +16,7 @@ import com.tms.TaskManagementSystem.request.Worker.UpdateWorkerRequest;
 import com.tms.TaskManagementSystem.response.Worker.WorkerResponse;
 import com.tms.TaskManagementSystem.services.WorkerService;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.jdbc.Work;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,24 +33,22 @@ public class WorkerServiceImpl implements WorkerService {
     private final OrganizationRepository organizationRepository;
 
     boolean checkingUserCredentials(String username, String password, boolean ignoreUsername) {
-        Optional<Worker> workerSelect = workerRepository.findByUsername(username.toLowerCase());
-        if(username.isBlank() || password.isBlank() || password.length()<8)
-        {
+        if (username.isBlank() || password.isBlank() || password.length() < 8) {
             throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_USERNAME_PASSWORD);
         }
-        else if(workerSelect.isPresent())
-        {
-            throw new IllegalArgumentException(ResponseMessage.ERROR_USERNAME_EXISTS);
-        }
+        workerRepository.findByUsername(username.toLowerCase())
+                .ifPresent(worker -> {
+                    throw new IllegalArgumentException(ResponseMessage.ERROR_USERNAME_EXISTS);
+                });
+
         return true;
     }
     @Override
     public WorkerResponse save(CreateWorkerRequest request) {
-        Optional<Organization> organizationWorker = organizationRepository.findByIdAndStatus(request.getOrganization_id(), OrganizationStatus.ACTIVE);
+        Organization organizationWorker = organizationRepository.findByIdAndStatus(request.getOrganization_id(), OrganizationStatus.ACTIVE)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
         if(checkingUserCredentials(request.getUsername(),request.getPassword(),false))
         {
-            if(organizationWorker.isPresent())
-            {
                 Worker worker = workerRepository.save(Worker.builder()
                         .name(request.getName())
                         .surname(request.getSurname())
@@ -57,7 +56,7 @@ public class WorkerServiceImpl implements WorkerService {
                         .password(request.getPassword())
                         .username(request.getUsername().toLowerCase())
                         .status(WorkerStatus.ACTIVE)
-                        .organization(organizationWorker.get()).build());
+                        .organization(organizationWorker).build());
                 return WorkerResponse.builder()
                         .username(worker.getUsername().toLowerCase())
                         .email(worker.getEmail())
@@ -66,12 +65,8 @@ public class WorkerServiceImpl implements WorkerService {
                         .surname(worker.getSurname())
                         .status(worker.getStatus())
                         .id(worker.getId())
-                        .organization(OrganizationMapper.INSTANCE.organizationToOrganizationDTO(organizationWorker.get()))
+                        .organization(OrganizationMapper.INSTANCE.organizationToOrganizationDTO(organizationWorker))
                         .build();
-            }
-            else{
-                throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
-            }
         }
         else{
             throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
@@ -80,60 +75,44 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public WorkerResponse update(Long id,UpdateWorkerRequest request) {
-        Optional<Worker> selectedWorker = workerRepository.findById(id);
-        boolean ignoreUsername = false;
-        if(selectedWorker.isPresent())
+        Worker selectedWorker = workerRepository.findById(id)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
+
+        boolean ignoreUsername = selectedWorker.getUsername().equalsIgnoreCase(request.getUsername());
+        if(checkingUserCredentials(request.getUsername(),request.getPassword(),ignoreUsername))
         {
-            if(selectedWorker.get().getUsername().equalsIgnoreCase(request.getUsername()))
-            {
-                ignoreUsername = true;
-            }
-            if(checkingUserCredentials(request.getUsername(),request.getPassword(),ignoreUsername))
-            {
-                selectedWorker.get().setName(request.getName());
-                selectedWorker.get().setSurname(request.getSurname());
-                selectedWorker.get().setUsername(request.getUsername().toLowerCase());
-                selectedWorker.get().setPassword(request.getPassword());
-                selectedWorker.get().setEmail(request.getEmail());
-                workerRepository.save(selectedWorker.get());
-                return WorkerMapper.INSTANCE.workerToWorkerResponse(selectedWorker.get());
-            }
-            else{
-                throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
-            }
+            selectedWorker.setName(request.getName());
+            selectedWorker.setSurname(request.getSurname());
+            selectedWorker.setUsername(request.getUsername().toLowerCase());
+            selectedWorker.setPassword(request.getPassword());
+            selectedWorker.setEmail(request.getEmail());
+            workerRepository.save(selectedWorker);
+            return WorkerMapper.INSTANCE.workerToWorkerResponse(selectedWorker);
         }
-        throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
+        else{
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
+        }
     }
     @Override
     public boolean delete(Long id) {
-        Optional<Worker> selectedWorker = workerRepository.findById(id);
-        if(selectedWorker.isPresent())
-        {
-            workerRepository.delete(selectedWorker.get());
-            return true;
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
-        }
+        Worker selectedWorker = workerRepository.findById(id)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
+        workerRepository.delete(selectedWorker);
+        return true;
     }
 
     @Override
     public boolean inactivate(Long id) {
-        Optional<Worker> selectedWorker = workerRepository.findByIdAndStatus(id,WorkerStatus.ACTIVE);
-        if(selectedWorker.isPresent())
-        {
-            selectedWorker.get().setStatus(WorkerStatus.INACTIVE);
-            workerRepository.save(selectedWorker.get());
+        Worker selectedWorker = workerRepository.findByIdAndStatus(id,WorkerStatus.ACTIVE)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
+
+            selectedWorker.setStatus(WorkerStatus.INACTIVE);
+            workerRepository.save(selectedWorker);
             return true;
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
-        }
     }
     @Override
-    public List<WorkerResponse> getWorkers(int pgNum,int pgSize) {
-        Pageable pageable = PageRequest.of(pgNum, pgSize);
-        Page<Worker> workers = workerRepository.findAll(pageable);
+    public List<WorkerResponse> getWorkers(Pageable pageable) {
+        Page<Worker> workers = workerRepository.findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         List<WorkerResponse> workerResponses = new ArrayList<>();
         for(Worker worker : workers)
         {
@@ -144,9 +123,8 @@ public class WorkerServiceImpl implements WorkerService {
     }
 
     @Override
-    public List<WorkerResponse> getActiveWorkers(int pgNum,int pgSize) {
-        Pageable pageable = PageRequest.of(pgNum, pgSize);
-        List<Worker> workers = workerRepository.findByStatus(WorkerStatus.ACTIVE,pageable);
+    public List<WorkerResponse> getActiveWorkers(Pageable pageable) {
+        List<Worker> workers = workerRepository.findByStatus(WorkerStatus.ACTIVE,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         List<WorkerResponse> workerResponses = new ArrayList<>();
         for(Worker worker : workers)
         {
@@ -158,23 +136,16 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public WorkerResponse getWorkerById(Long id) {
-        Optional<Worker> worker = workerRepository.findByIdAndStatus(id, WorkerStatus.ACTIVE);
-        if(worker.isPresent())
-        {
-            return WorkerMapper.INSTANCE.workerToWorkerResponse(worker.get());
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID);
-        }
+        Worker worker = workerRepository.findByIdAndStatus(id, WorkerStatus.ACTIVE)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
+        return WorkerMapper.INSTANCE.workerToWorkerResponse(worker);
     }
 
     @Override
-    public List<WorkerResponse> getWorkersByOrganizationId(Long id,int pgNum,int pgSize) {
-        Optional<Organization> organizationOptional = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE);
-        if(organizationOptional.isPresent())
-        {
-            Pageable pageable = PageRequest.of(pgNum, pgSize);
-            List<Worker> workers = workerRepository.findByOrganizationIdAndStatus(id,WorkerStatus.ACTIVE,pageable);
+    public List<WorkerResponse> getWorkersByOrganizationId(Long id,Pageable pageable) {
+        Organization organizationOptional = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE)
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
+            List<Worker> workers = workerRepository.findByOrganizationIdAndStatus(organizationOptional.getId(),WorkerStatus.ACTIVE,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
             List<WorkerResponse> workerGetResponses = new ArrayList<>();
             for(Worker worker : workers)
             {
@@ -182,9 +153,5 @@ public class WorkerServiceImpl implements WorkerService {
                 workerGetResponses.add(workerGetResponse);
             }
             return workerGetResponses;
-        }
-        else{
-            throw new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID);
-        }
     }
 }
