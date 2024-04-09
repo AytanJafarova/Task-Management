@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -25,6 +26,7 @@ public class WorkerController {
 //        return workerService.save(request);
 //    }
     @GetMapping("/all")
+    @PreAuthorize("hasAnyAuthority('admin:all_workers')")
     @Operation(summary = "Find all workers")
     public ResponseEntity<WorkerListResponse> getWorkers(Pageable pageable)
     {
@@ -57,6 +59,7 @@ public class WorkerController {
         return ResponseEntity.ok(workerService.update(id,request));
     }
     @PutMapping("/inactivate/{id}")
+    @PreAuthorize("hasAnyAuthority('admin:inactivate_worker')")
     @Operation(summary = "Inactivate Worker by worker id")
     public ResponseEntity<Boolean> inactivate(@PathVariable Long id)
     {
@@ -64,6 +67,7 @@ public class WorkerController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAnyAuthority('admin:delete_worker')")
     @Operation(summary = "Delete Worker by worker id")
     public ResponseEntity<Boolean> delete(@PathVariable Long id)
     {

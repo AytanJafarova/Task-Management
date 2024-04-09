@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public class OrganizationController {
     private final OrganizationService organizationService;
 
     @PostMapping("/save")
+    @PreAuthorize("hasAnyAuthority('admin:save_organization')")
     @Operation(summary = "Creating new Organization")
     public ResponseEntity<OrganizationResponse> save(@RequestBody CreateOrganizationRequest request)
     {
@@ -32,6 +34,7 @@ public class OrganizationController {
     }
 
     @PutMapping("update/{id}")
+    @PreAuthorize("hasAnyAuthority('admin:update_organization')")
     @Operation(summary = "Updating Organization by organization id")
     public  ResponseEntity<OrganizationResponse> update(@PathVariable Long id, @RequestBody UpdateOrganizationRequest request)
     {
@@ -39,6 +42,7 @@ public class OrganizationController {
     }
 
     @PutMapping("/inactivate/{id}")
+    @PreAuthorize("hasAnyAuthority('admin:inactivate_organization')")
     @Operation(summary = "Inactivate Organization by organization id")
     public ResponseEntity<Boolean> inactivate(@PathVariable Long id)
     {
@@ -46,6 +50,7 @@ public class OrganizationController {
     }
 
     @DeleteMapping("/delete/{id}")
+    @PreAuthorize("hasAnyAuthority('admin:delete_organization')")
     @Operation(summary = "Delete Organization by organization id")
     public ResponseEntity<Boolean> delete(@PathVariable Long id)
     {
@@ -60,6 +65,7 @@ public class OrganizationController {
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasAnyAuthority('admin:all_organizations')")
     @Operation(summary = "Find all Organizations")
     public ResponseEntity<OrganizationListResponse> getOrganizations(Pageable pageable)
     {

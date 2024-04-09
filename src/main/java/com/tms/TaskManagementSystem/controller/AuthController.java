@@ -23,6 +23,12 @@ public class AuthController {
         return ResponseEntity.ok(authenticationService.signUp(request));
     }
 
+    @PostMapping("/signUpAdmin")
+    public ResponseEntity<AuthenticationResponse> signUpAdmin(@RequestBody SignUpRequest request)
+    {
+        return ResponseEntity.ok(authenticationService.adminCreate(request));
+    }
+
     @PostMapping("/signIn")
     public ResponseEntity<AuthenticationResponse> signIn(@RequestBody SignInRequest request)
     {

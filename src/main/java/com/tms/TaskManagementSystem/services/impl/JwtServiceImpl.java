@@ -49,7 +49,7 @@ public class JwtServiceImpl implements JwtService {
         return Jwts.builder()
                 .subject(worker.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 24*60*60*1000))
+                .expiration(new Date(System.currentTimeMillis() + 2*60*60*1000))
                 .signWith(getSigningKey(SECRET_KEY))
                 .compact();
     }

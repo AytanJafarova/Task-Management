@@ -69,7 +69,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         else{
             throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
         }
-
     }
 
     public AuthenticationResponse signIn(SignInRequest request)
@@ -84,5 +83,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_USERNAME));
         String token = jwtService.generateToken(selectedUser);
         return new AuthenticationResponse(token);
+    }
+
+    @Override
+    public AuthenticationResponse adminCreate(SignUpRequest request) {
+
+        if(checkingUserCredentials(request.getUsername(),request.getPassword(),false))
+        {
+            Worker worker = workerRepository.save(Worker.builder()
+                    .name(request.getName())
+                    .surname(request.getSurname())
+                    .email(request.getEmail())
+                    .password(passwordEncoder.encode(request.getPassword()))
+                    .username(request.getUsername().toLowerCase())
+                    .status(WorkerStatus.ACTIVE)
+                    .role(Role.ADMIN)
+                    .build());
+
+            String token = jwtService.generateToken(worker);
+            return new AuthenticationResponse(token);
+        }
+        else{
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
+        }
     }
 }
