@@ -8,12 +8,15 @@ import com.tms.TaskManagementSystem.entity.enums.WorkerStatus;
 import com.tms.TaskManagementSystem.exception.DataNotFoundException;
 import com.tms.TaskManagementSystem.exception.IllegalArgumentException;
 import com.tms.TaskManagementSystem.exception.response.ResponseMessage;
+import com.tms.TaskManagementSystem.mappers.OrganizationMapper;
 import com.tms.TaskManagementSystem.mappers.TaskMapper;
 import com.tms.TaskManagementSystem.repository.TaskRepository;
 import com.tms.TaskManagementSystem.repository.WorkerRepository;
 import com.tms.TaskManagementSystem.request.Task.*;
+import com.tms.TaskManagementSystem.response.Task.TaskListResponse;
 import com.tms.TaskManagementSystem.response.Task.TaskResponse;
 import com.tms.TaskManagementSystem.services.TaskService;
+import com.tms.TaskManagementSystem.utils.PaginationUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -41,16 +45,13 @@ public class TaskServiceImpl implements TaskService {
                 });
         return true;
     }
-    List<TaskResponse> getByStatus(TaskStatus status,Pageable pageable)
+    TaskListResponse getByStatus(TaskStatus status,Pageable pageable)
     {
-        List<Task> tasks = taskRepository.findByStatus(status,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<TaskResponse> taskResponses = new ArrayList<>();
-        for(Task task : tasks)
-        {
-            TaskResponse taskResponse = TaskMapper.INSTANCE.taskToTaskResponse(task);
-            taskResponses.add(taskResponse);
-        }
-        return taskResponses;
+        Page<Task> tasks = taskRepository.findByStatus(status,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        TaskListResponse response = TaskListResponse.builder().build();
+        response.setItems(tasks.getContent().stream().map(TaskMapper.INSTANCE::taskToTaskResponse).collect(Collectors.toList()));
+        response.setPaginationInfo(PaginationUtil.getPaginationInfo(tasks));
+        return response;
     }
     @Override
     public TaskResponse save(CreateTaskRequest request) {
@@ -171,19 +172,16 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<TaskResponse> getTasks(Pageable pageable) {
+    public TaskListResponse getTasks(Pageable pageable) {
         Page<Task> tasks = taskRepository.findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<TaskResponse> taskResponses = new ArrayList<>();
-        for(Task task : tasks)
-        {
-            TaskResponse taskResponse = TaskMapper.INSTANCE.taskToTaskResponse(task);
-            taskResponses.add(taskResponse);
-        }
-        return taskResponses;
+        TaskListResponse response = TaskListResponse.builder().build();
+        response.setItems(tasks.getContent().stream().map(TaskMapper.INSTANCE::taskToTaskResponse).collect(Collectors.toList()));
+        response.setPaginationInfo(PaginationUtil.getPaginationInfo(tasks));
+        return response;
     }
 
     @Override
-    public List<TaskResponse> getInprogress(Pageable pageable) {
+    public TaskListResponse getInprogress(Pageable pageable) {
         return getByStatus(TaskStatus.IN_PROGRESS,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
     }
 
@@ -194,27 +192,24 @@ public class TaskServiceImpl implements TaskService {
         return TaskMapper.INSTANCE.taskToTaskResponse(task);
     }
     @Override
-    public List<TaskResponse> getByWorkerId(Long id,Pageable pageable) {
+    public TaskListResponse getByWorkerId(Long id,Pageable pageable) {
         Worker worker = workerRepository.findByIdAndStatus(id, WorkerStatus.ACTIVE)
                 .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
 
-        List<Task> tasks = taskRepository.findByWorkerId(id,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<TaskResponse> taskResponses = new ArrayList<>();
-        for(Task task : tasks)
-        {
-            TaskResponse taskResponse = TaskMapper.INSTANCE.taskToTaskResponse(task);
-            taskResponses.add(taskResponse);
-        }
-        return taskResponses;
+        Page<Task> tasks = taskRepository.findByWorkerId(worker.getId(),PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        TaskListResponse response = TaskListResponse.builder().build();
+        response.setItems(tasks.getContent().stream().map(TaskMapper.INSTANCE::taskToTaskResponse).collect(Collectors.toList()));
+        response.setPaginationInfo(PaginationUtil.getPaginationInfo(tasks));
+        return response;
     }
 
     @Override
-    public List<TaskResponse> getClosed(Pageable pageable) {
+    public TaskListResponse getClosed(Pageable pageable) {
         return getByStatus(TaskStatus.DONE,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
     }
 
     @Override
-    public List<TaskResponse> getTodo(Pageable pageable) {
+    public TaskListResponse getTodo(Pageable pageable) {
         return getByStatus(TaskStatus.TO_DO,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
     }
 }

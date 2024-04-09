@@ -19,6 +19,7 @@ public class ResponseMessage {
     public static final String ERROR_TASK_CLOSED = "Task already closed";
 
     public static final String ERROR_WORKER_NOT_FOUND_BY_ID = "Worker not found by given id";
+    public static final String ERROR_WORKER_NOT_FOUND_BY_USERNAME = "Worker not found by given username";
     public static final String ERROR_USERNAME_EXISTS = "Username already exists";
     public static final String ERROR_INVALID_USERNAME_PASSWORD = "Invalid username or password";
 

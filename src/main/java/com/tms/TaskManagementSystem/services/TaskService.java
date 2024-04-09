@@ -1,6 +1,7 @@
 package com.tms.TaskManagementSystem.services;
 
 import com.tms.TaskManagementSystem.request.Task.*;
+import com.tms.TaskManagementSystem.response.Task.TaskListResponse;
 import com.tms.TaskManagementSystem.response.Task.TaskResponse;
 import org.springframework.data.domain.Pageable;
 
@@ -13,11 +14,11 @@ public interface TaskService {
     TaskResponse close(Long id);
     boolean delete(Long id);
     boolean arrived(Long id);
-    List<TaskResponse> getTasks(Pageable pageable);
-    List<TaskResponse> getInprogress(Pageable pageable);
-    List<TaskResponse> getClosed(Pageable pageable);
-    List<TaskResponse> getTodo(Pageable pageable);
+    TaskListResponse getTasks(Pageable pageable);
+    TaskListResponse getInprogress(Pageable pageable);
+    TaskListResponse getClosed(Pageable pageable);
+    TaskListResponse getTodo(Pageable pageable);
 
     TaskResponse getTaskById(Long id);
-    List<TaskResponse> getByWorkerId(Long id,Pageable pageable);
+    TaskListResponse getByWorkerId(Long id,Pageable pageable);
 }

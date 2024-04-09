@@ -8,13 +8,16 @@ import com.tms.TaskManagementSystem.exception.DataNotFoundException;
 import com.tms.TaskManagementSystem.exception.IllegalArgumentException;
 import com.tms.TaskManagementSystem.exception.response.ResponseMessage;
 import com.tms.TaskManagementSystem.mappers.OrganizationMapper;
+import com.tms.TaskManagementSystem.mappers.TaskMapper;
 import com.tms.TaskManagementSystem.mappers.WorkerMapper;
 import com.tms.TaskManagementSystem.repository.OrganizationRepository;
 import com.tms.TaskManagementSystem.repository.WorkerRepository;
 import com.tms.TaskManagementSystem.request.Worker.CreateWorkerRequest;
 import com.tms.TaskManagementSystem.request.Worker.UpdateWorkerRequest;
+import com.tms.TaskManagementSystem.response.Worker.WorkerListResponse;
 import com.tms.TaskManagementSystem.response.Worker.WorkerResponse;
 import com.tms.TaskManagementSystem.services.WorkerService;
+import com.tms.TaskManagementSystem.utils.PaginationUtil;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.jdbc.Work;
 import org.springframework.data.domain.Page;
@@ -25,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,35 +47,35 @@ public class WorkerServiceImpl implements WorkerService {
 
         return true;
     }
-    @Override
-    public WorkerResponse save(CreateWorkerRequest request) {
-        Organization organizationWorker = organizationRepository.findByIdAndStatus(request.getOrganization_id(), OrganizationStatus.ACTIVE)
-                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
-        if(checkingUserCredentials(request.getUsername(),request.getPassword(),false))
-        {
-                Worker worker = workerRepository.save(Worker.builder()
-                        .name(request.getName())
-                        .surname(request.getSurname())
-                        .email(request.getEmail())
-                        .password(request.getPassword())
-                        .username(request.getUsername().toLowerCase())
-                        .status(WorkerStatus.ACTIVE)
-                        .organization(organizationWorker).build());
-                return WorkerResponse.builder()
-                        .username(worker.getUsername().toLowerCase())
-                        .email(worker.getEmail())
-                        .password(worker.getPassword())
-                        .name(worker.getName())
-                        .surname(worker.getSurname())
-                        .status(worker.getStatus())
-                        .id(worker.getId())
-                        .organization(OrganizationMapper.INSTANCE.organizationToOrganizationDTO(organizationWorker))
-                        .build();
-        }
-        else{
-            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
-        }
-    }
+//    @Override
+//    public WorkerResponse save(CreateWorkerRequest request) {
+//        Organization organizationWorker = organizationRepository.findByIdAndStatus(request.getOrganization_id(), OrganizationStatus.ACTIVE)
+//                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
+//        if(checkingUserCredentials(request.getUsername(),request.getPassword(),false))
+//        {
+//                Worker worker = workerRepository.save(Worker.builder()
+//                        .name(request.getName())
+//                        .surname(request.getSurname())
+//                        .email(request.getEmail())
+//                        .password(request.getPassword())
+//                        .username(request.getUsername().toLowerCase())
+//                        .status(WorkerStatus.ACTIVE)
+//                        .organization(organizationWorker).build());
+//                return WorkerResponse.builder()
+//                        .username(worker.getUsername().toLowerCase())
+//                        .email(worker.getEmail())
+//                        .password(worker.getPassword())
+//                        .name(worker.getName())
+//                        .surname(worker.getSurname())
+//                        .status(worker.getStatus())
+//                        .id(worker.getId())
+//                        .organization(OrganizationMapper.INSTANCE.organizationToOrganizationDTO(organizationWorker))
+//                        .build();
+//        }
+//        else{
+//            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION);
+//        }
+//    }
 
     @Override
     public WorkerResponse update(Long id,UpdateWorkerRequest request) {
@@ -111,27 +115,21 @@ public class WorkerServiceImpl implements WorkerService {
             return true;
     }
     @Override
-    public List<WorkerResponse> getWorkers(Pageable pageable) {
+    public WorkerListResponse getWorkers(Pageable pageable) {
         Page<Worker> workers = workerRepository.findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<WorkerResponse> workerResponses = new ArrayList<>();
-        for(Worker worker : workers)
-        {
-            WorkerResponse workerGetResponse = WorkerMapper.INSTANCE.workerToWorkerResponse(worker);
-            workerResponses.add(workerGetResponse);
-        }
-        return workerResponses;
+        WorkerListResponse response = WorkerListResponse.builder().build();
+        response.setItems(workers.getContent().stream().map(WorkerMapper.INSTANCE::workerToWorkerResponse).collect(Collectors.toList()));
+        response.setPaginationInfo(PaginationUtil.getPaginationInfo(workers));
+        return response;
     }
 
     @Override
-    public List<WorkerResponse> getActiveWorkers(Pageable pageable) {
-        List<Worker> workers = workerRepository.findByStatus(WorkerStatus.ACTIVE,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<WorkerResponse> workerResponses = new ArrayList<>();
-        for(Worker worker : workers)
-        {
-            WorkerResponse workerGetResponse = WorkerMapper.INSTANCE.workerToWorkerResponse(worker);
-            workerResponses.add(workerGetResponse);
-        }
-        return workerResponses;
+    public WorkerListResponse getActiveWorkers(Pageable pageable) {
+        Page<Worker> workers = workerRepository.findByStatus(WorkerStatus.ACTIVE,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        WorkerListResponse response = WorkerListResponse.builder().build();
+        response.setItems(workers.getContent().stream().map(WorkerMapper.INSTANCE::workerToWorkerResponse).collect(Collectors.toList()));
+        response.setPaginationInfo(PaginationUtil.getPaginationInfo(workers));
+        return response;
     }
 
     @Override
@@ -142,16 +140,13 @@ public class WorkerServiceImpl implements WorkerService {
     }
 
     @Override
-    public List<WorkerResponse> getWorkersByOrganizationId(Long id,Pageable pageable) {
+    public WorkerListResponse getWorkersByOrganizationId(Long id,Pageable pageable) {
         Organization organizationOptional = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE)
                 .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
-            List<Worker> workers = workerRepository.findByOrganizationIdAndStatus(organizationOptional.getId(),WorkerStatus.ACTIVE,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-            List<WorkerResponse> workerGetResponses = new ArrayList<>();
-            for(Worker worker : workers)
-            {
-                WorkerResponse workerGetResponse = WorkerMapper.INSTANCE.workerToWorkerResponse(worker);
-                workerGetResponses.add(workerGetResponse);
-            }
-            return workerGetResponses;
+        Page<Worker> workers = workerRepository.findByOrganizationIdAndStatus(organizationOptional.getId(),WorkerStatus.ACTIVE,PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        WorkerListResponse response = WorkerListResponse.builder().build();
+        response.setItems(workers.getContent().stream().map(WorkerMapper.INSTANCE::workerToWorkerResponse).collect(Collectors.toList()));
+        response.setPaginationInfo(PaginationUtil.getPaginationInfo(workers));
+        return response;
     }
 }

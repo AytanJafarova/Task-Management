@@ -1,6 +1,7 @@
 package com.tms.TaskManagementSystem.controller;
 
 import com.tms.TaskManagementSystem.request.Task.*;
+import com.tms.TaskManagementSystem.response.Task.TaskListResponse;
 import com.tms.TaskManagementSystem.response.Task.TaskResponse;
 import com.tms.TaskManagementSystem.services.TaskService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,35 +36,35 @@ public class TaskController {
 
     @GetMapping()
     @Operation(summary = "Find all tasks")
-    public ResponseEntity<List<TaskResponse>> getTasks(Pageable pageable)
+    public ResponseEntity<TaskListResponse> getTasks(Pageable pageable)
     {
         return ResponseEntity.ok(taskService.getTasks(pageable));
     }
 
     @GetMapping("/worker/{id}")
     @Operation(summary = "Find Tasks by worker id")
-    public ResponseEntity<List<TaskResponse>> getByWorkerID(Long id,Pageable pageable)
+    public ResponseEntity<TaskListResponse> getByWorkerID(@PathVariable Long id, Pageable pageable)
     {
         return ResponseEntity.ok(taskService.getByWorkerId(id,pageable));
     }
 
     @GetMapping("/closed")
     @Operation(summary = "Find all closed tasks")
-    public ResponseEntity<List<TaskResponse>> getClosedTasks(Pageable pageable)
+    public ResponseEntity<TaskListResponse> getClosedTasks(Pageable pageable)
     {
         return ResponseEntity.ok(taskService.getClosed(pageable));
     }
 
     @GetMapping("/progress")
     @Operation(summary = "Find all Tasks in progress")
-    public ResponseEntity<List<TaskResponse>> getInProgress(Pageable pageable)
+    public ResponseEntity<TaskListResponse> getInProgress(Pageable pageable)
     {
         return ResponseEntity.ok(taskService.getInprogress(pageable));
     }
 
     @GetMapping("/todo")
     @Operation(summary = "Find all Tasks in ToDo")
-    public ResponseEntity<List<TaskResponse>> getTodo(Pageable pageable)
+    public ResponseEntity<TaskListResponse> getTodo(Pageable pageable)
     {
         return ResponseEntity.ok(taskService.getTodo(pageable));
     }

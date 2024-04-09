@@ -2,6 +2,7 @@ package com.tms.TaskManagementSystem.controller;
 
 import com.tms.TaskManagementSystem.request.Organization.CreateOrganizationRequest;
 import com.tms.TaskManagementSystem.request.Organization.UpdateOrganizationRequest;
+import com.tms.TaskManagementSystem.response.Organization.OrganizationListResponse;
 import com.tms.TaskManagementSystem.response.Organization.OrganizationResponse;
 import com.tms.TaskManagementSystem.response.Organization.OrganizationWorkersResponse;
 import com.tms.TaskManagementSystem.services.OrganizationService;
@@ -60,14 +61,14 @@ public class OrganizationController {
 
     @GetMapping("/all")
     @Operation(summary = "Find all Organizations")
-    public ResponseEntity<List<OrganizationResponse>> getOrganizations(Pageable pageable)
+    public ResponseEntity<OrganizationListResponse> getOrganizations(Pageable pageable)
     {
         return ResponseEntity.ok(organizationService.getOrganizations(pageable));
     }
 
     @GetMapping("")
     @Operation(summary = "Find all active Organizations")
-    public ResponseEntity<List<OrganizationResponse>> getActiveOrganizations(Pageable pageable)
+    public ResponseEntity<OrganizationListResponse> getActiveOrganizations(Pageable pageable)
     {
         return ResponseEntity.ok(organizationService.getActiveOrganizations(pageable));
     }

@@ -11,10 +11,12 @@ import com.tms.TaskManagementSystem.mappers.OrganizationMapper;
 import com.tms.TaskManagementSystem.repository.OrganizationRepository;
 import com.tms.TaskManagementSystem.request.Organization.CreateOrganizationRequest;
 import com.tms.TaskManagementSystem.request.Organization.UpdateOrganizationRequest;
+import com.tms.TaskManagementSystem.response.Organization.OrganizationListResponse;
 import com.tms.TaskManagementSystem.response.Organization.OrganizationResponse;
 import com.tms.TaskManagementSystem.response.Organization.OrganizationWorkersResponse;
 import com.tms.TaskManagementSystem.services.OrganizationService;
 
+import com.tms.TaskManagementSystem.utils.PaginationUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -93,34 +96,28 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     @Override
-    public List<OrganizationResponse> getOrganizations(Pageable pageable) {
-        Page<Organization> organizationPage = organizationRepository.findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<OrganizationResponse> organizationResponses = new ArrayList<>();
-        for(Organization organization : organizationPage)
-        {
-            OrganizationResponse organizationResponse = OrganizationMapper.INSTANCE.organizationToOrganizationResponse(organization);
-            organizationResponses.add(organizationResponse);
-        }
-        return organizationResponses;
+    public OrganizationListResponse getOrganizations(Pageable pageable) {
+        Page<Organization> organizations = organizationRepository.findAll(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        OrganizationListResponse response = OrganizationListResponse.builder().build();
+        response.setItems(organizations.getContent().stream().map(OrganizationMapper.INSTANCE::organizationToOrganizationResponse).collect(Collectors.toList()));
+        response.setPaginationInfo(PaginationUtil.getPaginationInfo(organizations));
+        return response;
     }
 
     @Override
-    public List<OrganizationResponse> getActiveOrganizations(Pageable pageable) {
-        List<Organization> organizationPage = organizationRepository.findByStatus(OrganizationStatus.ACTIVE, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
-        List<OrganizationResponse> organizationResponses = new ArrayList<>();
-        for(Organization organization : organizationPage)
-        {
-            OrganizationResponse organizationResponse = OrganizationMapper.INSTANCE.organizationToOrganizationResponse(organization);
-            organizationResponses.add(organizationResponse);
-        }
-        return organizationResponses;
+    public OrganizationListResponse getActiveOrganizations(Pageable pageable) {
+        Page<Organization> organizations = organizationRepository.findByStatus(OrganizationStatus.ACTIVE, PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        OrganizationListResponse response = OrganizationListResponse.builder().build();
+        response.setItems(organizations.getContent().stream().map(OrganizationMapper.INSTANCE::organizationToOrganizationResponse).collect(Collectors.toList()));
+        response.setPaginationInfo(PaginationUtil.getPaginationInfo(organizations));
+        return response;
     }
 
     @Override
     public List<OrganizationWorkersResponse> getOrganizationsWorkers(Pageable pageable) {
-        List<Organization> organizationPage = organizationRepository.findAllWithWorkers(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
+        Page<Organization> organizations = organizationRepository.findAllWithWorkers(PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         List<OrganizationWorkersResponse> organizationResponses = new ArrayList<>();
-        for (Organization organization : organizationPage) {
+        for (Organization organization : organizations) {
             List<Worker> workers = organization.getWorkers();
             List<WorkerDTO> workerDTOs = new ArrayList<>();
             for (Worker worker : workers) {

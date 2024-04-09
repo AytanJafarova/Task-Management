@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -22,11 +23,18 @@ public class JwtServiceImpl implements JwtService {
     {
         return extractClaim(token, Claims::getSubject);
     }
-    public boolean isValid(String token, Worker worker)
+    public boolean isValid(String token, UserDetails worker)
     {
         String username = extractUsername(token);
-        return true;
+        return (username.equals(worker.getUsername()) && !isTokenExpired(token));
+    }
 
+    public boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    public Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
     public <T> T extractClaim(String token, Function<Claims, T> resolver)
