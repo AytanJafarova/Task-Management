@@ -1,0 +1,43 @@
+version: '3'
+services:
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - "9090:8080"
+    depends_on:
+      - database
+    networks:
+      - tms_network
+
+  app:
+    image: tms-image:v1
+    ports:
+      - '8080:8080'
+    depends_on:
+      - database
+    environment:
+      - DB_CONNECTION_URL=tms_db_mysql_hostname
+      - DB_PORT=3306
+      - DB_NAME=tmsdb
+    networks:
+      - tms_network
+
+  database:
+    hostname: tms_db_mysql_hostname
+    image: mysql:8.0.36-debian
+    restart: always
+    environment:
+       MYSQL_USER : aytan
+       MYSQL_PASSWORD : 12345 #Aytan_Jafar%03
+       MYSQL_DATABASE : tmsdb
+       MYSQL_ROOT_PASSWORD : 12345
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./var/lib:/var/lib/mysql
+    networks:
+      - tms_network
+
+networks:
+  tms_network:

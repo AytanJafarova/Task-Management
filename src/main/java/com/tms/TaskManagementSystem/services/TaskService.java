@@ -5,8 +5,6 @@ import com.tms.TaskManagementSystem.response.Task.TaskListResponse;
 import com.tms.TaskManagementSystem.response.Task.TaskResponse;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-
 public interface TaskService {
     TaskResponse save(CreateTaskRequest request);
     TaskResponse update(Long id,UpdateTaskRequest request);

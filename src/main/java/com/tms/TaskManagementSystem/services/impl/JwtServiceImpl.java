@@ -18,7 +18,20 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class JwtServiceImpl implements JwtService {
     private final String SECRET_KEY = "c4c25bff69b2c46050cb9f409d01ec908fd71e20176be2a5d6e97580e15a9b2e";
-
+    @Override
+    public SecretKey getSigningKey(String key) {
+        byte[] keyBytes = Decoders.BASE64URL.decode(key);
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
+    @Override
+    public Claims extractClaims(String token) {
+        return Jwts.
+                parser()
+                .verifyWith(getSigningKey(SECRET_KEY))
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+    }
     public String extractUsername(String token)
     {
         return extractClaim(token, Claims::getSubject);
@@ -53,21 +66,4 @@ public class JwtServiceImpl implements JwtService {
                 .signWith(getSigningKey(SECRET_KEY))
                 .compact();
     }
-
-    @Override
-    public SecretKey getSigningKey(String key) {
-        byte[] keyBytes = Decoders.BASE64URL.decode(key);
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    @Override
-    public Claims extractClaims(String token) {
-        return Jwts.
-                parser()
-                .verifyWith(getSigningKey(SECRET_KEY))
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
 }
-

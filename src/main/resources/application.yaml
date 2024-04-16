@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: TaskManagementSystem
+
+  datasource:
+    url: jdbc:mysql://${DB_CONNECTION_URL:localhost}:${DB_PORT:3306}/${DB_NAME:tmsdb}
+    username: root
+    password: 12345
+    #driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false

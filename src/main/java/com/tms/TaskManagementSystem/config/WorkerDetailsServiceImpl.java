@@ -16,6 +16,6 @@ public class WorkerDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return workerRepository.findByUsername(username).orElseThrow(()-> new DataNotFoundException("USer not found"));
+        return workerRepository.findByUsername(username).orElseThrow(()-> new DataNotFoundException("User not found"));
     }
 }

@@ -21,7 +21,6 @@ public class TaskController {
     private final TaskService taskService;
 
     @PostMapping("/save")
-    @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Creating new Task")
     public ResponseEntity<TaskResponse> save(@RequestBody CreateTaskRequest request)
     {
