@@ -11,7 +11,7 @@ services:
       - tms_network
 
   app:
-    image: tms-image:v1
+    image: tms-image:v2
     ports:
       - '8080:8080'
     depends_on:

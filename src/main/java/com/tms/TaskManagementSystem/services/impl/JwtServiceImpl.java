@@ -9,6 +9,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -16,6 +17,7 @@ import java.util.function.Function;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class JwtServiceImpl implements JwtService {
     private final String SECRET_KEY = "c4c25bff69b2c46050cb9f409d01ec908fd71e20176be2a5d6e97580e15a9b2e";
     @Override
