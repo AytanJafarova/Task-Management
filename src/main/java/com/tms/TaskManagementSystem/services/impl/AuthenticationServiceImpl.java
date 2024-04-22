@@ -12,9 +12,7 @@ import com.tms.TaskManagementSystem.repository.OrganizationRepository;
 import com.tms.TaskManagementSystem.repository.WorkerRepository;
 import com.tms.TaskManagementSystem.request.Auth.SignInRequest;
 import com.tms.TaskManagementSystem.request.Auth.SignUpRequest;
-import com.tms.TaskManagementSystem.request.Worker.CreateWorkerRequest;
 import com.tms.TaskManagementSystem.response.Auth.AuthenticationResponse;
-import com.tms.TaskManagementSystem.response.Worker.WorkerResponse;
 import com.tms.TaskManagementSystem.services.AuthenticationService;
 import com.tms.TaskManagementSystem.services.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -23,8 +21,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor

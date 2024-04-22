@@ -6,7 +6,10 @@ import lombok.Getter;
 public enum TaskStatus {
     TO_DO(0, "TO_DO"),
     IN_PROGRESS(1, "IN_PROGRESS"),
-    DONE(2, "DONE");
+    DONE(2, "DONE"),
+    OVERDUE(3, "OVERDUE"),
+    DELAYED(4, "DELAYED");
+
 
     private final int intValue;
     private final String stringValue;
@@ -20,6 +23,8 @@ public enum TaskStatus {
             case 0 -> TO_DO;
             case 1 -> IN_PROGRESS;
             case 2 -> DONE;
+            case 3 -> OVERDUE;
+            case 4 -> DELAYED;
             default -> null;
         };
     }

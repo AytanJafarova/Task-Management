@@ -1,5 +1,6 @@
 package com.tms.TaskManagementSystem.controller;
 
+import com.tms.TaskManagementSystem.entity.enums.TaskStatus;
 import com.tms.TaskManagementSystem.request.Task.*;
 import com.tms.TaskManagementSystem.response.Task.TaskListResponse;
 import com.tms.TaskManagementSystem.response.Task.TaskResponse;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,28 +54,35 @@ public class TaskController {
     @Operation(summary = "Find all closed tasks")
     public ResponseEntity<TaskListResponse> getClosedTasks(Pageable pageable)
     {
-        return ResponseEntity.ok(taskService.getClosed(pageable));
+        return ResponseEntity.ok(taskService.getByTaskStatus(TaskStatus.DONE ,pageable));
     }
 
     @GetMapping("/progress")
     @Operation(summary = "Find all Tasks in progress")
     public ResponseEntity<TaskListResponse> getInProgress(Pageable pageable)
     {
-        return ResponseEntity.ok(taskService.getInprogress(pageable));
+        return ResponseEntity.ok(taskService.getByTaskStatus(TaskStatus.IN_PROGRESS,pageable));
     }
 
     @GetMapping("/todo")
-    @Operation(summary = "Find all Tasks in ToDo")
+    @Operation(summary = "Find all Tasks ToDo")
     public ResponseEntity<TaskListResponse> getTodo(Pageable pageable)
     {
-        return ResponseEntity.ok(taskService.getTodo(pageable));
+        return ResponseEntity.ok(taskService.getByTaskStatus(TaskStatus.TO_DO,pageable));
     }
 
-    @GetMapping("/arrived/{id}")
-    @Operation(summary = "Check if deadline arrived for task")
-    public ResponseEntity<Boolean> arrived(@PathVariable Long id)
+    @GetMapping("/overdue")
+    @Operation(summary = "Find all Tasks Overdue")
+    public ResponseEntity<TaskListResponse> getOverdue(Pageable pageable)
     {
-        return ResponseEntity.ok(taskService.arrived(id));
+        return ResponseEntity.ok(taskService.getByTaskStatus(TaskStatus.OVERDUE,pageable));
+    }
+
+    @GetMapping("/delayed")
+    @Operation(summary = "Find all Tasks Delayed")
+    public ResponseEntity<TaskListResponse> getDelayed(Pageable pageable)
+    {
+        return ResponseEntity.ok(taskService.getByTaskStatus(TaskStatus.DELAYED,pageable));
     }
 
     @DeleteMapping("/delete/{id}")

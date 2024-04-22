@@ -14,7 +14,7 @@ public class ResponseMessage {
     public static final String ERROR_INVALID_PRIORITY_PROVIDED = "Invalid priority value provided";
     public static final String ERROR_TASK_NOT_FOUND_BY_ID = "Task not found by given id";
     public static final String ERROR_TASK_NOT_ASSIGNED = "Task is not assigned";
-    public static final String ERROR_DEADLINE_NOT_SPECIFIED = "Task deadline is not specified";
+    public static final String ERROR_INVALID_DEADLINE_PROVIDED = "Task deadline is not provided appropriately";
     public static final String ERROR_TASK_ASSIGNED = "Task already assigned";
     public static final String ERROR_TASK_CLOSED = "Task already closed";
 
