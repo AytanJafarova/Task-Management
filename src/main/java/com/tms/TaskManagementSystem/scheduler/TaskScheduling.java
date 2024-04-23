@@ -23,7 +23,7 @@ public class TaskScheduling {
        List<TaskResponse> inProgress = taskService.deadlineCheckingInProgress();
        for(TaskResponse task:inProgress)
        {
-           messageProducer.publish("task_topic",task);
+           messageProducer.publish("task_deadline_topic",task);
        }
     }
 
@@ -35,7 +35,7 @@ public class TaskScheduling {
         if (!overDue.isEmpty()) {
             for(TaskResponse task:overDue)
             {
-                messageProducer.publish("task_topic",task);
+                messageProducer.publish("task_deadline_topic",task);
             }
         }
     }
@@ -49,7 +49,7 @@ public class TaskScheduling {
         {
             for(TaskResponse task: todo)
             {
-                messageProducer.publish("task_topic",task);
+                messageProducer.publish("task_deadline_topic",task);
             }
         }
     }
