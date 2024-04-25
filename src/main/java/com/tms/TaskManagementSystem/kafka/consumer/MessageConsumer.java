@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class MessageConsumer {
+
     private static final String TOPIC_NAME = "task_deadline_topic";
     private static final String GROUP_ID = "task_group";
     private static final String CONTAINER_FACTORY = "containerFactory";

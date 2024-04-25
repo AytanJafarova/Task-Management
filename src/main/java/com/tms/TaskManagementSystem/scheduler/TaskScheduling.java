@@ -17,6 +17,7 @@ public class TaskScheduling {
     private final TaskServiceImpl taskService;
     private final MessageProducer messageProducer;
 
+    // 0 0 1-6 * * *
     @Scheduled(cron = "0 0 1-6 * * *")
     @Transactional
     public void deadlineCheckingInProgress() {

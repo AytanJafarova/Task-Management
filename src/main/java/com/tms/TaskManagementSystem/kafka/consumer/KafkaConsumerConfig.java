@@ -21,14 +21,20 @@ public class KafkaConsumerConfig {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String BOOTSTRAP_SERVERS;
+    @Value("${spring.kafka.consumer.key-deserializer}")
+    private String KEY_DESERIALIZER;
+    @Value("${spring.kafka.consumer.value-deserializer}")
+    private String VALUE_DESERIALIZED;
+    @Value("${spring.kafka.consumer.auto-offset-reset}")
+    private String AUTO_OFFSET_RESET;
 
     @Bean
     public ConsumerFactory<String, TaskResponse> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVERS);
-        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
-        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,KEY_DESERIALIZER);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, VALUE_DESERIALIZED);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, AUTO_OFFSET_RESET);
         props.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new JsonDeserializer<>(TaskResponse.class));
