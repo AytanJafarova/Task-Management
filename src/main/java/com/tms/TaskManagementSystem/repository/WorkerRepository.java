@@ -14,7 +14,10 @@ import java.util.Optional;
 public interface WorkerRepository extends JpaRepository<Worker,Long> {
     Page<Worker> findByStatusAndRole(WorkerStatus status, Role role, Pageable pageable);
     Page<Worker> findByRole(Role role, Pageable pageable);
-    Optional<Worker> findByUsername(String username);
+    Optional<Worker> findByIdAndRole(Long id,Role role);
+    Optional<Worker> findByUsernameAndStatus(String username, WorkerStatus status);
     Optional<Worker> findByIdAndStatus(Long id, WorkerStatus status);
+    Optional<Worker> findByEmail(String email);
+    Optional<Worker> findByIdAndStatusAndRole(Long id, WorkerStatus status, Role role);
     Page<Worker> findByOrganizationIdAndStatus(Long id, WorkerStatus status, Pageable pageable);
 }

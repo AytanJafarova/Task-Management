@@ -17,7 +17,7 @@ public class TaskScheduling {
     private final TaskServiceImpl taskService;
     private final MessageProducer messageProducer;
 
-    @Scheduled(cron = "*/10 * * * * *")
+    @Scheduled(cron = "0 0 1-6 * * *")
     @Transactional
     public void deadlineCheckingInProgress() {
        List<TaskResponse> inProgress = taskService.deadlineCheckingInProgress();
@@ -27,7 +27,7 @@ public class TaskScheduling {
        }
     }
 
-    @Scheduled(cron = "*/10 * * * * *")
+    @Scheduled(cron = "0 0 1-6 * * *")
     @Transactional
     public void deadlineCheckingOverdue()
     {
@@ -40,7 +40,7 @@ public class TaskScheduling {
         }
     }
 
-    @Scheduled(cron = "*/10 * * * * *")
+    @Scheduled(cron = "0 0 1-6 * * *")
     @Transactional
     public void assignAlert()
     {

@@ -33,21 +33,24 @@ import java.util.stream.Collectors;
 @Transactional
 public class OrganizationServiceImpl implements OrganizationService {
     private final OrganizationRepository organizationRepository;
-    boolean checkingName(String name)
+    boolean checkingName(String name,boolean ignoreName)
     {
         if (name.isBlank()) {
             throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_ORGANIZATION_NAME);
         }
-        organizationRepository.findByName(name.toLowerCase())
-                .ifPresent(org -> {
-                    throw new IllegalArgumentException(ResponseMessage.ERROR_ORGANIZATION_EXISTS);
-                });
+        if(!ignoreName)
+        {
+            organizationRepository.findByName(name.toLowerCase())
+                    .ifPresent(org -> {
+                        throw new IllegalArgumentException(ResponseMessage.ERROR_ORGANIZATION_EXISTS);
+                    });
+        }
         return true;
     }
 
     @Override
     public OrganizationResponse save(CreateOrganizationRequest request) {
-        if(checkingName(request.getName()))
+        if(checkingName(request.getName(),false))
         {
             Organization organization = organizationRepository.save(Organization.builder()
                     .name(request.getName())
@@ -67,7 +70,8 @@ public class OrganizationServiceImpl implements OrganizationService {
 
         Organization organization = organizationRepository.findById(id)
                 .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
-        if(checkingName(request.getName()))
+        boolean ignoreName = request.getName().equalsIgnoreCase(organization.getName());
+        if(checkingName(request.getName(),ignoreName))
         {
             organization.setName(request.getName());
             organizationRepository.save(organization);

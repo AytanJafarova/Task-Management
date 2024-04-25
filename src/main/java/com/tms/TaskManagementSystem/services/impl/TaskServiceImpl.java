@@ -2,6 +2,7 @@ package com.tms.TaskManagementSystem.services.impl;
 
 import com.tms.TaskManagementSystem.entity.Task;
 import com.tms.TaskManagementSystem.entity.Worker;
+import com.tms.TaskManagementSystem.entity.enums.Role;
 import com.tms.TaskManagementSystem.entity.enums.TaskPriority;
 import com.tms.TaskManagementSystem.entity.enums.TaskStatus;
 import com.tms.TaskManagementSystem.entity.enums.WorkerStatus;
@@ -35,14 +36,21 @@ import java.util.stream.Collectors;
 public class TaskServiceImpl implements TaskService {
     private final TaskRepository taskRepository;
     private final WorkerRepository workerRepository;
-    boolean checkingTaskInfo(String header) {
+    boolean checkingTaskInfo(String header, LocalDateTime deadline,boolean ignoreHeader) {
         if (header.isBlank()) {
             throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_TASK_HEADER);
         }
-        taskRepository.findByHeader(header.toLowerCase())
-                .ifPresent(task -> {
-                    throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_ALREADY_EXISTS);
-                });
+        if(!ignoreHeader)
+        {
+            taskRepository.findByHeader(header.toLowerCase())
+                    .ifPresent(task -> {
+                        throw new IllegalArgumentException(ResponseMessage.ERROR_TASK_ALREADY_EXISTS);
+                    });
+        }
+        if(deadline==null || deadline.isBefore(LocalDateTime.now(ZoneId.of("Asia/Baku"))))
+        {
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_DEADLINE_PROVIDED);
+        }
         return true;
     }
     TaskListResponse getListByStatus(TaskStatus status, Pageable pageable) {
@@ -54,36 +62,30 @@ public class TaskServiceImpl implements TaskService {
     }
     @Override
     public TaskResponse save(CreateTaskRequest request) {
-        if(checkingTaskInfo(request.getHeader()))
+        if(checkingTaskInfo(request.getHeader(), request.getDeadline(), false))
         {
-            if(request.getDeadline()!=null && request.getDeadline().isAfter(LocalDateTime.now(ZoneId.of("Asia/Baku"))))
+            try{
+                Task task = taskRepository.save(Task.builder()
+                        .header(request.getHeader().toLowerCase())
+                        .content(request.getContent().toLowerCase())
+                        .priority(TaskPriority.definingDegree(request.getPriority().getIntValue()))
+                        .status(TaskStatus.TO_DO)
+                        .created(LocalDateTime.now(ZoneId.of("Asia/Baku")))
+                        .deadline(request.getDeadline()).build());
+                return TaskResponse.builder()
+                        .id(task.getId())
+                        .header(task.getHeader().toLowerCase())
+                        .content(task.getContent().toLowerCase())
+                        .priority(task.getPriority())
+                        .status(task.getStatus())
+                        .created(task.getCreated())
+                        .deadline(task.getDeadline())
+                        .closed(task.getClosed())
+                        .build();
+                }
+            catch (Exception e)
             {
-                try{
-                    Task task = taskRepository.save(Task.builder()
-                            .header(request.getHeader().toLowerCase())
-                            .content(request.getContent().toLowerCase())
-                            .priority(TaskPriority.definingDegree(request.getPriority().getIntValue()))
-                            .status(TaskStatus.TO_DO)
-                            .created(LocalDateTime.now(ZoneId.of("Asia/Baku")))
-                            .deadline(request.getDeadline()).build());
-                    return TaskResponse.builder()
-                            .id(task.getId())
-                            .header(task.getHeader().toLowerCase())
-                            .content(task.getContent().toLowerCase())
-                            .priority(task.getPriority())
-                            .status(task.getStatus())
-                            .created(task.getCreated())
-                            .deadline(task.getDeadline())
-                            .closed(task.getClosed())
-                            .build();
-                }
-                catch (Exception e)
-                {
-                    throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_PRIORITY_PROVIDED);
-                }
-            }
-            else{
-                throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_DEADLINE_PROVIDED);
+                throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_PRIORITY_PROVIDED);
             }
         }
         else{
@@ -96,7 +98,9 @@ public class TaskServiceImpl implements TaskService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
 
-        if(checkingTaskInfo(request.getHeader()) && request.getDeadline()!=null && request.getDeadline().isAfter(LocalDateTime.now(ZoneId.of("Asia/Baku"))))
+        boolean ignoreHeader = request.getHeader().equalsIgnoreCase(task.getHeader());
+
+        if(checkingTaskInfo(request.getHeader(),request.getDeadline(),ignoreHeader))
         {
             task.setHeader(request.getHeader().toLowerCase());
             task.setContent(request.getContent().toLowerCase());
@@ -115,7 +119,7 @@ public class TaskServiceImpl implements TaskService {
         Task selectedTask = taskRepository.findById(id)
                 .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
 
-        Worker worker = workerRepository.findByIdAndStatus(workerId, WorkerStatus.ACTIVE)
+        Worker worker = workerRepository.findByIdAndStatusAndRole(workerId, WorkerStatus.ACTIVE, Role.USER)
                 .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
 
         switch (selectedTask.getStatus()){
@@ -212,6 +216,7 @@ public class TaskServiceImpl implements TaskService {
         return taskResponses;
     }
 
+//    Scheduler Methods
     public List<TaskResponse> deadlineCheckingInProgress() {
         List<TaskResponse> inProgress = getByTaskStatus(TaskStatus.IN_PROGRESS);
         if (!inProgress.isEmpty()) {

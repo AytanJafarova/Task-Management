@@ -32,25 +32,35 @@ public class WorkerServiceImpl implements WorkerService {
     private final WorkerRepository workerRepository;
     private final OrganizationRepository organizationRepository;
 
-    boolean checkingUserCredentials(String username, String password, boolean ignoreUsername) {
-        if (username.isBlank() || password.isBlank() || password.length() < 8) {
-            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_USERNAME_PASSWORD);
+    public boolean checkingUserCredentials(String username, String password, String email, boolean ignoreUsername, boolean ignoreMail) {
+        if (username.isBlank() || password.isBlank() || password.length() < 8 || email.isBlank()) {
+            throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_CREDENTIALS);
         }
-        workerRepository.findByUsername(username.toLowerCase())
-                .ifPresent(worker -> {
-                    throw new IllegalArgumentException(ResponseMessage.ERROR_USERNAME_EXISTS);
-                });
-
+        if(!ignoreUsername)
+        {
+            workerRepository.findByUsernameAndStatus(username.toLowerCase(),WorkerStatus.ACTIVE)
+                    .ifPresent(worker -> {
+                        throw new IllegalArgumentException(ResponseMessage.ERROR_USERNAME_EXISTS);
+                    });
+        }
+        if(!ignoreMail)
+        {
+            workerRepository.findByEmail(email.toLowerCase())
+                    .ifPresent(worker -> {
+                        throw new IllegalArgumentException(ResponseMessage.ERROR_EMAIL_ALREADY_EXISTS);
+                    });
+        }
         return true;
     }
 
     @Override
     public WorkerResponse update(Long id,UpdateWorkerRequest request) {
-        Worker selectedWorker = workerRepository.findById(id)
+        Worker selectedWorker = workerRepository.findByIdAndStatusAndRole(id,WorkerStatus.ACTIVE, Role.USER)
                 .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
 
         boolean ignoreUsername = selectedWorker.getUsername().equalsIgnoreCase(request.getUsername());
-        if(checkingUserCredentials(request.getUsername(),request.getPassword(),ignoreUsername))
+        boolean ignoreMail = selectedWorker.getEmail().equalsIgnoreCase(request.getEmail());
+        if(checkingUserCredentials(request.getUsername(), request.getPassword(), request.getEmail(),ignoreUsername, ignoreMail))
         {
             selectedWorker.setName(request.getName());
             selectedWorker.setSurname(request.getSurname());
@@ -66,7 +76,7 @@ public class WorkerServiceImpl implements WorkerService {
     }
     @Override
     public boolean delete(Long id) {
-        Worker selectedWorker = workerRepository.findById(id)
+        Worker selectedWorker = workerRepository.findByIdAndRole(id, Role.USER)
                 .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
         workerRepository.delete(selectedWorker);
         return true;
@@ -74,7 +84,7 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public boolean inactivate(Long id) {
-        Worker selectedWorker = workerRepository.findByIdAndStatus(id,WorkerStatus.ACTIVE)
+        Worker selectedWorker = workerRepository.findByIdAndStatusAndRole(id,WorkerStatus.ACTIVE, Role.USER)
                 .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
 
             selectedWorker.setStatus(WorkerStatus.INACTIVE);
@@ -101,7 +111,7 @@ public class WorkerServiceImpl implements WorkerService {
 
     @Override
     public WorkerResponse getWorkerById(Long id) {
-        Worker worker = workerRepository.findByIdAndStatus(id, WorkerStatus.ACTIVE)
+        Worker worker = workerRepository.findByIdAndStatusAndRole(id, WorkerStatus.ACTIVE, Role.USER)
                 .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
         return WorkerMapper.INSTANCE.workerToWorkerResponse(worker);
     }

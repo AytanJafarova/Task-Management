@@ -1,7 +1,7 @@
 package com.tms.TaskManagementSystem.filter;
 
 import com.tms.TaskManagementSystem.config.WorkerDetailsServiceImpl;
-import com.tms.TaskManagementSystem.services.JwtService;
+import com.tms.TaskManagementSystem.security.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

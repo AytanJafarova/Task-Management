@@ -3,7 +3,7 @@ package com.tms.TaskManagementSystem.controller;
 import com.tms.TaskManagementSystem.request.Auth.SignInRequest;
 import com.tms.TaskManagementSystem.request.Auth.SignUpRequest;
 import com.tms.TaskManagementSystem.response.Auth.AuthenticationResponse;
-import com.tms.TaskManagementSystem.services.AuthenticationService;
+import com.tms.TaskManagementSystem.security.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;

@@ -22,6 +22,8 @@ public class ResponseMessage {
     public static final String ERROR_WORKER_NOT_FOUND_BY_USERNAME = "Worker not found by given username";
     public static final String ERROR_USERNAME_EXISTS = "Username already exists";
     public static final String ERROR_INVALID_USERNAME_PASSWORD = "Invalid username or password";
+    public static final String ERROR_EMAIL_ALREADY_EXISTS = "Email already exists";
+    public static final String ERROR_INVALID_CREDENTIALS = "Invalid credentials provided";
 
     public static final String ERROR_INTERNAL_SERVER_ERROR = "Internal server error.";
     public static final String ERROR_INVALID_OPERATION = "Invalid operation!";

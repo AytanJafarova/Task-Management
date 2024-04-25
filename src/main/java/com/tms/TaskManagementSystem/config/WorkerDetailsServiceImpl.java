@@ -1,5 +1,6 @@
 package com.tms.TaskManagementSystem.config;
 
+import com.tms.TaskManagementSystem.entity.enums.WorkerStatus;
 import com.tms.TaskManagementSystem.exception.DataNotFoundException;
 import com.tms.TaskManagementSystem.repository.WorkerRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,6 @@ public class WorkerDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return workerRepository.findByUsername(username).orElseThrow(()-> new DataNotFoundException("User not found"));
+        return workerRepository.findByUsernameAndStatus(username, WorkerStatus.ACTIVE).orElseThrow(()-> new DataNotFoundException("User not found"));
     }
 }

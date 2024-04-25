@@ -17,7 +17,8 @@ public enum Permission {
 
     ADMIN_GET_ALL_WORKERS("admin:all_workers"),
     ADMIN_INACTIVATE_WORKER("admin:inactivate_worker"),
-    ADMIN_DELETE_WORKER("admin:delete_worker")
+    ADMIN_DELETE_WORKER("admin:delete_worker"),
+    ADMIN_CREATE_WORKER("admin:create_worker")
     ;
     private final String permission;
 }

@@ -17,14 +17,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class WorkerController {
     private final WorkerService workerService;
-
-//    @PostMapping("/save")
-//    @ResponseStatus(HttpStatus.CREATED)
-//    @Operation(summary = "Adding new Worker")
-//    public WorkerResponse save(@RequestBody CreateWorkerRequest request)
-//    {
-//        return workerService.save(request);
-//    }
     @GetMapping("/all")
     @PreAuthorize("hasAnyAuthority('admin:all_workers')")
     @Operation(summary = "Find all workers")

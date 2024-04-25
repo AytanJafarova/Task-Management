@@ -25,6 +25,7 @@ public enum Role {
                     Permission.ADMIN_UPDATE_ORGANIZATION,
                     Permission.ADMIN_INACTIVATE_ORGANIZATION,
                     Permission.ADMIN_INACTIVATE_WORKER,
+                    Permission.ADMIN_CREATE_WORKER,
                     Permission.ADMIN_GET_ALL_WORKERS
             )
     );
