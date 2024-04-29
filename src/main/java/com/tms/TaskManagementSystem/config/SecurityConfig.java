@@ -25,11 +25,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private final WorkerDetailsServiceImpl userDetailsService;
     private final JwtAuthenticationFilter authenticationFilter;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
-                        req-> req.requestMatchers("/auth/signIn/**","/auth/signUp/**","/auth/signUpAdmin")
+                        req-> req.requestMatchers("/auth/signIn/**","/auth/signUp/**","/auth/signUpAdmin","/v3/api-docs/**","/swagger-ui/**","/api/auth/**","/api/test/**")
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated()

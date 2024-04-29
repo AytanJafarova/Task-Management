@@ -1,7 +1,7 @@
 version: '3'
 services:
   app:
-    image: app-tms-image:v1
+    image: app-tms-image:v2
     ports:
       - '8080:8080'
     depends_on:
