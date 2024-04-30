@@ -18,7 +18,7 @@ spring:
     secret_key: "c4c25bff69b2c46050cb9f409d01ec908fd71e20176be2a5d6e97580e15a9b2e"
 
   kafka:
-    bootstrap-servers: ${KAFKA_HOST:172.17.80.1}:${KAFKA_PORT:9092}
+    bootstrap-servers: ${KAFKA_HOST:}:${KAFKA_PORT:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
