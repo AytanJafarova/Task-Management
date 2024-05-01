@@ -4,7 +4,7 @@ services:
     image: app-tms-image:v1
     restart: always
     ports:
-      - '8080:8080'
+      - '8082:8080'
     depends_on:
       - database
       - broker
@@ -28,7 +28,8 @@ services:
       - '3307:3306'
     volumes:
       - ./var/lib:/var/lib/mysql
-
+    networks:
+      - tms_network
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.1
@@ -40,6 +41,8 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - tms_network
 
   broker:
     image: confluentinc/cp-kafka:7.5.1
@@ -56,13 +59,15 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker:29092,PLAINTEXT_HOST://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_broker:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_JMX_PORT: 9101
       KAFKA_JMX_HOSTNAME: localhost
+    networks:
+      - tms_network
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
@@ -76,6 +81,8 @@ services:
       - KAFKA_CLUSTERS_0_NAME=local
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka_broker:29092
       - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    networks:
+      - tms_network
 
 networks:
   tms_network:
