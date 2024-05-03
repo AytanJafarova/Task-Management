@@ -18,4 +18,5 @@ public interface OrganizationService {
     OrganizationListResponse getActiveOrganizations(Pageable pageable);
     List<OrganizationWorkersResponse> getOrganizationsWorkers(Pageable pageable);
     OrganizationWorkersResponse getOrganizationById(Long id);
+    boolean checkingName(String name,boolean ignoreName);
 }

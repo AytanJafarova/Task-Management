@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 @Transactional
 public class OrganizationServiceImpl implements OrganizationService {
     private final OrganizationRepository organizationRepository;
-    boolean checkingName(String name,boolean ignoreName)
+    public boolean checkingName(String name,boolean ignoreName)
     {
         if (name.isBlank()) {
             throw new IllegalArgumentException(ResponseMessage.ERROR_INVALID_ORGANIZATION_NAME);

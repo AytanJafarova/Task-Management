@@ -84,7 +84,7 @@ class OrganizationRepositoryTest {
     }
 
     @Test
-    void findAllWithWorkers() // check again (query implementation checking + worker include checking)
+    void findAllWithWorkers()
     {
         // given
         when(organizationRepository.findAllWithWorkers(any(Pageable.class))).thenReturn(organizations);
