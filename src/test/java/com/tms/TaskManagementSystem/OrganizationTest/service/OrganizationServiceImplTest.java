@@ -5,6 +5,7 @@ import com.tms.TaskManagementSystem.entity.Worker;
 import com.tms.TaskManagementSystem.entity.enums.OrganizationStatus;
 import com.tms.TaskManagementSystem.exception.DataNotFoundException;
 import com.tms.TaskManagementSystem.exception.IllegalArgumentException;
+import com.tms.TaskManagementSystem.exception.response.ResponseMessage;
 import com.tms.TaskManagementSystem.repository.OrganizationRepository;
 import com.tms.TaskManagementSystem.request.Organization.CreateOrganizationRequest;
 import com.tms.TaskManagementSystem.request.Organization.UpdateOrganizationRequest;
@@ -27,8 +28,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,14 +60,26 @@ class OrganizationServiceImplTest {
     }
 
     @Test
-    void testCheckingNameInvalidShouldThrowIllegalArgumentException() {
+    void testCheckingNameInvalidShouldThrowIllegalArgumentExceptionWhenNameExists() {
         // Given
-        when(organizationService.checkingName(organizationName, ignoreName)).thenThrow(new IllegalArgumentException("Invalid organization name"));
+        when(organizationRepository.findByName(organizationName)).thenThrow(new IllegalArgumentException("Organization with the specified name already exists"));
 
-        // Then
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> organizationServiceImpl.checkingName(organizationName, true));
-        verify(organizationService, times(1)).checkingName(organizationName, true);
-        verifyNoMoreInteractions(organizationService);
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> organizationServiceImpl.checkingName("test_organization",anyBoolean()));
+
+        verify(organizationRepository, times(1)).findByName("test_organization");
+        verifyNoMoreInteractions(organizationRepository);
+    }
+    @Test
+    void testCheckingNameInvalidShouldThrowIllegalArgumentExceptionWhenNameNull() {
+        String blank_name = " ";
+        // Given
+        when(organizationRepository.findByName(organizationName)).thenThrow(new IllegalArgumentException("Invalid organization name"));
+
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> organizationServiceImpl.checkingName(blank_name,true));
+
+        verify(organizationRepository, times(1)).findByName(" ");
     }
 
     @Test
@@ -121,67 +133,106 @@ class OrganizationServiceImplTest {
 
     @Test
     void testSaveOrganizationShouldThrowIllegalArgumentException() {
-        // Given
-        when(organizationRepository.save(Organization.builder().name(organizationName).id(id).status(statusActive).workers(workers).build())).thenThrow(new IllegalArgumentException("Invalid operation!"));
+        when(organizationRepository.save(any(Organization.class)))
+                .thenThrow(new IllegalArgumentException("Invalid operation!"));
 
-        // Then
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(()->organizationServiceImpl.save(CreateOrganizationRequest.builder().name("test_organization").build()));
-        verify(organizationRepository, times(1)).save(Organization.builder().name(organizationName).id(id).status(statusActive).workers(workers).build());
-        verifyNoMoreInteractions(organizationRepository);
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> organizationServiceImpl.save(CreateOrganizationRequest.builder().name(organizationName).build()));
+
+        verify(organizationRepository, times(1))
+                .save(any(Organization.class));
     }
 
     @Test
     void testUpdateOrganizationShouldReturnOrganization() {
-        // Given
-        UpdateOrganizationRequest request = UpdateOrganizationRequest.builder().name(organizationName).build();
+        UpdateOrganizationRequest request = UpdateOrganizationRequest.builder()
+                .name(organizationName).build();
+        Organization savedOrganization = Organization.builder().id(id).workers(workers).status(statusActive).name(organizationName).build();
 
-        Organization updatedOrganization = new Organization();
-        updatedOrganization.setId(id);
-        updatedOrganization.setStatus(statusActive);
-        updatedOrganization.setWorkers(workers);
-        updatedOrganization.setName(organizationName);
-        when(organizationRepository.save(any(Organization.class))).thenReturn(updatedOrganization);
+        when(organizationRepository.findByIdAndStatus(id, OrganizationStatus.ACTIVE))
+                .thenReturn(Optional.of(savedOrganization));
+        when(organizationRepository.save(savedOrganization)).thenReturn(savedOrganization);
 
-        // When
         OrganizationResponse response = organizationServiceImpl.update(10L,request);
 
-        // Then
         assertNotNull(response);
-        assertEquals(10L, response.getId());
-        assertEquals("test_organization", response.getName());
+        verify(organizationRepository).findByIdAndStatus(10L, statusActive);
+        verify(organizationRepository).save(savedOrganization);
     }
 
     @Test
-    void testUpdateOrganizationShouldThrowIllegalArgumentException() {
-        // Given
-        when(organizationService.update(id,UpdateOrganizationRequest.builder().name(organizationName).build())).thenThrow(new IllegalArgumentException("Invalid operation!"));
+    void testUpdateOrganizationThrowsIllegalArgumentException() {
+        String updatedName = "test_update_organization";
+        UpdateOrganizationRequest request = UpdateOrganizationRequest.builder()
+                .name(updatedName)
+                .build();
+
+        Organization existingOrganization = new Organization();
+        existingOrganization.setId(id);
+        existingOrganization.setName(organizationName);
+        existingOrganization.setStatus(statusActive);
+        existingOrganization.setWorkers(workers);
+
+        when(organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE))
+                .thenReturn(Optional.of(existingOrganization));
+        when(organizationRepository.findByName(updatedName.toLowerCase()))
+                .thenReturn(Optional.empty());
+        when(organizationServiceImpl.checkingName("test_update_organization", anyBoolean()))
+                .thenReturn(true);
 
         // Then
-        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(()->organizationService.update(10L,UpdateOrganizationRequest.builder().name("test_organization").build()));
-        verify(organizationService, times(1)).update(id,UpdateOrganizationRequest.builder().name(organizationName).build());
-        verifyNoMoreInteractions(organizationService);
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> organizationServiceImpl.update(id, request))
+                .withMessageContaining(ResponseMessage.ERROR_ORGANIZATION_EXISTS);
+
+        verify(organizationRepository, times(1)).findByIdAndStatus(10L, OrganizationStatus.ACTIVE);
+        verify(organizationRepository, times(1)).findByName("test_update_organization");
+    }
+    @Test
+    void testUpdateOrganizationShouldThrowDataNotFoundException() {
+        // When
+        when(organizationRepository.findByIdAndStatus(id,statusActive))
+                .thenThrow(new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
+
+        // Then
+        assertThatExceptionOfType(DataNotFoundException.class)
+                .isThrownBy(() -> organizationServiceImpl.update(10L,UpdateOrganizationRequest.builder().name("test_organization").build()));
+
+        verify(organizationRepository, times(1)).findByIdAndStatus(10L, OrganizationStatus.ACTIVE);
+        verifyNoMoreInteractions(organizationRepository);
     }
 
     @Test
     void testInactiveOrganizationShouldReturnTrue() {
         // Given
-        when(organizationService.inactivate(id)).thenReturn(inactivate);
+        Organization existingOrganization = new Organization();
+        existingOrganization.setId(id);
+        existingOrganization.setName(organizationName);
+        existingOrganization.setStatus(statusActive);
+        existingOrganization.setWorkers(workers);
+
+        // When
+        when(organizationRepository.findByIdAndStatus(id,statusActive))
+                .thenReturn(Optional.of(existingOrganization));
+        boolean result = organizationServiceImpl.inactivate(existingOrganization.getId());
 
         // Then
-        assertThat(organizationService.inactivate(10L)).isEqualTo(inactivate);
-        verify(organizationService, times(1)).inactivate(id);
-        verifyNoMoreInteractions(organizationService);
+        assertTrue(result);
+        assertEquals(OrganizationStatus.INACTIVE, existingOrganization.getStatus());
     }
 
     @Test
     void testInactiveOrganizationShouldThrowDataNotFoundException() {
-        // Given
-        when(organizationService.inactivate(id)).thenThrow(new DataNotFoundException("Organization not found by given id"));
+        // When
+        when(organizationRepository.findByIdAndStatus(id,statusActive))
+                .thenThrow(new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
 
         // Then
-        assertThatExceptionOfType(DataNotFoundException.class).isThrownBy(()->organizationService.inactivate(10L));
-        verify(organizationService, times(1)).inactivate(id);
-        verifyNoMoreInteractions(organizationService);
+        assertThatExceptionOfType(DataNotFoundException.class)
+                .isThrownBy(() -> organizationServiceImpl.inactivate(10L));
+
+        verify(organizationRepository, times(1)).findByIdAndStatus(10L, OrganizationStatus.ACTIVE);
+        verifyNoMoreInteractions(organizationRepository);
     }
 
     @Test
@@ -192,24 +243,31 @@ class OrganizationServiceImplTest {
         existingOrganization.setName(organizationName);
         existingOrganization.setStatus(statusActive);
         existingOrganization.setWorkers(workers);
-        when(organizationRepository.findByIdAndStatus(id,statusActive)).thenReturn(Optional.of(existingOrganization));
 
         // When
-        Boolean result = organizationServiceImpl.delete(10L);
+        when(organizationRepository.findById(id))
+                .thenReturn(Optional.of(existingOrganization));
 
         // Then
-        assertThat(result).isTrue();
-        verify(organizationRepository,times(1)).delete(existingOrganization);
-        verifyNoMoreInteractions();
+        assertTrue(organizationServiceImpl.delete(10L));
+
+        verify(organizationRepository, times(1)).findById(10L);
+        verify(organizationRepository, times(1)).delete(existingOrganization);
+        verifyNoMoreInteractions(organizationRepository);
     }
 
     @Test
     void testDeleteShouldThrowIllegalArgumentException() {
-        // Given
-        when(organizationRepository.findByIdAndStatus(id,statusActive)).thenThrow(new DataNotFoundException("Organization not found by given id"));
+        // When
+        when(organizationRepository.findById(id))
+                .thenThrow(new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
 
         // Then
-        assertThatExceptionOfType(DataNotFoundException.class).isThrownBy(()->organizationServiceImpl.delete(10L));
+        assertThatExceptionOfType(DataNotFoundException.class)
+                .isThrownBy(() -> organizationServiceImpl.delete(10L));
+
+        verify(organizationRepository, times(1)).findById(10L);
+        verifyNoMoreInteractions(organizationRepository);
     }
 
     @Test

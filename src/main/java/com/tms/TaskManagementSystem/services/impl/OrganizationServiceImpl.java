@@ -68,7 +68,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public OrganizationResponse update(Long id,UpdateOrganizationRequest request) {
 
-        Organization organization = organizationRepository.findById(id)
+        Organization organization = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE)
                 .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
         boolean ignoreName = request.getName().equalsIgnoreCase(organization.getName());
         if(checkingName(request.getName(),ignoreName))
@@ -84,7 +84,7 @@ public class OrganizationServiceImpl implements OrganizationService {
 
     @Override
     public boolean inactivate(Long id) {
-        Organization organization = organizationRepository.findById(id)
+        Organization organization = organizationRepository.findByIdAndStatus(id,OrganizationStatus.ACTIVE)
                 .orElseThrow(()-> new DataNotFoundException(ResponseMessage.ERROR_ORGANIZATION_NOT_FOUND_BY_ID));
         organization.setStatus(OrganizationStatus.INACTIVE);
         organizationRepository.save(organization);
