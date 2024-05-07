@@ -1,8 +1,6 @@
 package com.tms.TaskManagementSystem.TaskTest.repository;
 
-import com.tms.TaskManagementSystem.entity.Organization;
 import com.tms.TaskManagementSystem.entity.Task;
-import com.tms.TaskManagementSystem.entity.enums.OrganizationStatus;
 import com.tms.TaskManagementSystem.entity.enums.TaskPriority;
 import com.tms.TaskManagementSystem.entity.enums.TaskStatus;
 import com.tms.TaskManagementSystem.repository.TaskRepository;

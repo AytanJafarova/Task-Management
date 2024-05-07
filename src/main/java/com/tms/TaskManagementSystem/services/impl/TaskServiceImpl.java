@@ -199,7 +199,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public TaskListResponse getByWorkerId(Long id,Pageable pageable) {
         Worker worker = workerRepository.findByIdAndStatus(id, WorkerStatus.ACTIVE)
-                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_TASK_NOT_FOUND_BY_ID));
+                .orElseThrow(()->new DataNotFoundException(ResponseMessage.ERROR_WORKER_NOT_FOUND_BY_ID));
 
         Page<Task> tasks = taskRepository.findByWorkerId(worker.getId(),PageRequest.of(pageable.getPageNumber(), pageable.getPageSize()));
         TaskListResponse response = TaskListResponse.builder().build();

@@ -7,7 +7,6 @@ import com.tms.TaskManagementSystem.entity.enums.OrganizationStatus;
 import com.tms.TaskManagementSystem.entity.enums.Role;
 import com.tms.TaskManagementSystem.entity.enums.WorkerStatus;
 import com.tms.TaskManagementSystem.repository.WorkerRepository;
-import jakarta.persistence.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
@@ -34,66 +32,66 @@ class WorkerRepositoryTest {
     @Mock
     WorkerRepository workerRepository;
 
-    private final Long id = 1L;
-    private final String username = "test_username";
-    private final String password = "test_password";
-    private final String name = "test_name";
-    private final String surname = "test_surname";
-    private final String email = "test_email";
-    private final WorkerStatus status = WorkerStatus.ACTIVE;
-    private final List<Worker> workersForOrganization = new ArrayList<>();
-    private Page<Worker> workers= new PageImpl<>(new ArrayList<>());
-    private final List<Task> tasks = new ArrayList<>();
-    private final Role role = Role.USER;
-    private final Pageable pageable = PageRequest.of(0,1);
-    private final Organization organization = Organization.builder()
+    private final Long ID = 1L;
+    private final String USERNAME = "test_username";
+    private final String PASSWORD = "test_password";
+    private final String NAME = "test_name";
+    private final String SURNAME = "test_surname";
+    private final String EMAIL = "test_email";
+    private final WorkerStatus STATUS = WorkerStatus.ACTIVE;
+    private final List<Worker> WORKERS_FOR_ORGANIZATION = new ArrayList<>();
+    private Page<Worker> WORKERS= new PageImpl<>(new ArrayList<>());
+    private final List<Task> TASKS = new ArrayList<>();
+    private final Role ROLE = Role.USER;
+    private final Pageable PAGEABLE = PageRequest.of(0,1);
+    private final Organization ORGANIZATION = Organization.builder()
             .id(1L)
             .name("test_organization")
             .status(OrganizationStatus.ACTIVE)
-            .workers(workersForOrganization)
+            .workers(WORKERS_FOR_ORGANIZATION)
             .build();
 
     private final Worker worker = new Worker();
 
     @BeforeEach
     void setUp() {
-        worker.setId(id);
-        worker.setUsername(username);
-        worker.setPassword(password);
-        worker.setName(name);
-        worker.setSurname(surname);
-        worker.setEmail(email);
-        worker.setStatus(status);
-        workersForOrganization.add(worker);
-        worker.setOrganization(organization);
-        worker.setRole(role);
-        worker.setTasks(tasks);
-        workers = new PageImpl<>(Collections.singletonList(worker));
+        worker.setId(ID);
+        worker.setUsername(USERNAME);
+        worker.setPassword(PASSWORD);
+        worker.setName(NAME);
+        worker.setSurname(SURNAME);
+        worker.setEmail(EMAIL);
+        worker.setStatus(STATUS);
+        WORKERS_FOR_ORGANIZATION.add(worker);
+        worker.setOrganization(ORGANIZATION);
+        worker.setRole(ROLE);
+        worker.setTasks(TASKS);
+        WORKERS = new PageImpl<>(Collections.singletonList(worker));
     }
     @Test
     void findByStatusAndRole()
     {
         // given
-        when(workerRepository.findByStatusAndRole(any(), any(),any(Pageable.class))).thenReturn(workers);
+        when(workerRepository.findByStatusAndRole(any(), any(),any(Pageable.class))).thenReturn(WORKERS);
 
         // when
-        Page<Worker> result = workerRepository.findByStatusAndRole(status, role, pageable);
+        Page<Worker> result = workerRepository.findByStatusAndRole(STATUS, ROLE, PAGEABLE);
 
         // then
-        assertThat(workers).isEqualTo(result);
+        assertThat(WORKERS).isEqualTo(result);
     }
 
     @Test
     void findByRole()
     {
         // given
-        when(workerRepository.findByRole(any(),any(Pageable.class))).thenReturn(workers);
+        when(workerRepository.findByRole(any(),any(Pageable.class))).thenReturn(WORKERS);
 
         // when
-        Page<Worker> result = workerRepository.findByRole(role, pageable);
+        Page<Worker> result = workerRepository.findByRole(ROLE, PAGEABLE);
 
         // then
-        assertThat(workers).isEqualTo(result);
+        assertThat(WORKERS).isEqualTo(result);
     }
     @Test
     void findByIdAndRole()
@@ -102,7 +100,7 @@ class WorkerRepositoryTest {
         when(workerRepository.findByIdAndRole(anyLong(),any())).thenReturn(Optional.of(worker));
 
         // when
-        Optional<Worker> result = workerRepository.findByIdAndRole(id, role);
+        Optional<Worker> result = workerRepository.findByIdAndRole(ID, ROLE);
 
         // then
         assertThat(worker).isEqualTo(result.get());
@@ -114,7 +112,7 @@ class WorkerRepositoryTest {
         when(workerRepository.findByUsernameAndStatus(anyString(),any())).thenReturn(Optional.of(worker));
 
         // when
-        Optional<Worker> result = workerRepository.findByUsernameAndStatus(username, status);
+        Optional<Worker> result = workerRepository.findByUsernameAndStatus(USERNAME, STATUS);
 
         // then
         assertThat(worker).isEqualTo(result.get());
@@ -126,7 +124,7 @@ class WorkerRepositoryTest {
         when(workerRepository.findByIdAndStatus(anyLong(),any())).thenReturn(Optional.of(worker));
 
         // when
-        Optional<Worker> result = workerRepository.findByIdAndStatus(id, status);
+        Optional<Worker> result = workerRepository.findByIdAndStatus(ID, STATUS);
 
         // then
         assertThat(worker).isEqualTo(result.get());
@@ -139,7 +137,7 @@ class WorkerRepositoryTest {
         when(workerRepository.findByEmail(anyString())).thenReturn(Optional.of(worker));
 
         // when
-        Optional<Worker> result = workerRepository.findByEmail(email);
+        Optional<Worker> result = workerRepository.findByEmail(EMAIL);
 
         // then
         assertThat(worker).isEqualTo(result.get());
@@ -152,7 +150,7 @@ class WorkerRepositoryTest {
         when(workerRepository.findByIdAndStatusAndRole(anyLong(),any(),any())).thenReturn(Optional.of(worker));
 
         // when
-        Optional<Worker> result = workerRepository.findByIdAndStatusAndRole(id,status,role);
+        Optional<Worker> result = workerRepository.findByIdAndStatusAndRole(ID,STATUS,ROLE);
 
         // then
         assertThat(worker).isEqualTo(result.get());
@@ -162,12 +160,12 @@ class WorkerRepositoryTest {
     void findByOrganizationIdAndStatus()
     {
         // given
-        when(workerRepository.findByOrganizationIdAndStatus(anyLong(),any(),any(Pageable.class))).thenReturn(workers);
+        when(workerRepository.findByOrganizationIdAndStatus(anyLong(),any(),any(Pageable.class))).thenReturn(WORKERS);
 
         // when
-        Page<Worker> result = workerRepository.findByOrganizationIdAndStatus(id,status,pageable);
+        Page<Worker> result = workerRepository.findByOrganizationIdAndStatus(ID,STATUS,PAGEABLE);
 
         // then
-        assertThat(workers).isEqualTo(result);
+        assertThat(WORKERS).isEqualTo(result);
     }
 }
