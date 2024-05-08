@@ -13,4 +13,5 @@ public interface WorkerService {
     WorkerListResponse getActiveWorkers(Pageable pageable);
     WorkerResponse getWorkerById(Long id);
     WorkerListResponse getWorkersByOrganizationId(Long id, Pageable pageable);
+    boolean checkingUserCredentials(String username, String password, String email, boolean ignoreUsername, boolean ignoreMail);
 }

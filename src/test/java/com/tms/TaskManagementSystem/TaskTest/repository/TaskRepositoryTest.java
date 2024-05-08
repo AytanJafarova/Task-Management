@@ -29,70 +29,70 @@ class TaskRepositoryTest {
     @Mock
     TaskRepository taskRepository;
 
-    private Page<Task> tasks= new PageImpl<>(new ArrayList<>());
-    private final Long id = 1L;
-    private final String header = "test_header";
-    private final String content = "test_header";
-    private final TaskPriority priority = TaskPriority.HIGH;
-    private final TaskStatus status = TaskStatus.TO_DO;
-    private final LocalDateTime created = LocalDateTime.now();
-    private final LocalDateTime deadline = LocalDateTime.now().plusDays(1);
-    private final LocalDateTime closed = LocalDateTime.now().plusDays(2);
+    private Page<Task> TASKS= new PageImpl<>(new ArrayList<>());
+    private final Long ID = 1L;
+    private final String HEADER = "test_header";
+    private final String CONTENT = "test_header";
+    private final TaskPriority PRIORITY = TaskPriority.HIGH;
+    private final TaskStatus STATUS = TaskStatus.TO_DO;
+    private final LocalDateTime CREATED = LocalDateTime.now();
+    private final LocalDateTime DEADLINE = LocalDateTime.now().plusDays(1);
+    private final LocalDateTime CLOSED = LocalDateTime.now().plusDays(2);
 
-    private final Task task= new Task();
-    private final Pageable pageable = PageRequest.of(0,1);
+    private final Task TASK= new Task();
+    private final Pageable PAGEABLE = PageRequest.of(0,1);
 
 
     @BeforeEach
     void setUp() {
-        task.setId(id);
-        task.setHeader(header);
-        task.setStatus(status);
-        task.setContent(content);
-        task.setPriority(priority);
-        task.setCreated(created);
-        task.setDeadline(deadline);
-        task.setClosed(closed);
-        tasks = new PageImpl<>(Collections.singletonList(task));
+        TASK.setId(ID);
+        TASK.setHeader(HEADER);
+        TASK.setStatus(STATUS);
+        TASK.setContent(CONTENT);
+        TASK.setPriority(PRIORITY);
+        TASK.setCreated(CREATED);
+        TASK.setDeadline(DEADLINE);
+        TASK.setClosed(CLOSED);
+        TASKS = new PageImpl<>(Collections.singletonList(TASK));
     }
 
     @Test
     void findByHeader()
     {
         // given
-        when(taskRepository.findByHeader(anyString())).thenReturn(Optional.of(task));
+        when(taskRepository.findByHeader(anyString())).thenReturn(Optional.of(TASK));
 
         // when
-        Optional<Task> result = taskRepository.findByHeader(header);
+        Optional<Task> result = taskRepository.findByHeader(HEADER);
 
         // then
-        assertThat(task).isEqualTo(result.get());
+        assertThat(TASK).isEqualTo(result.get());
     }
 
     @Test
     void findByWorkerId()
     {
         // given
-        when(taskRepository.findByWorkerId(anyLong(),any(Pageable.class))).thenReturn(tasks);
+        when(taskRepository.findByWorkerId(anyLong(),any(Pageable.class))).thenReturn(TASKS);
 
         // when
-        Page<Task> result = taskRepository.findByWorkerId(id,pageable);
+        Page<Task> result = taskRepository.findByWorkerId(ID,PAGEABLE);
 
         // then
-        assertThat(tasks).isEqualTo(result);
+        assertThat(TASKS).isEqualTo(result);
     }
 
     @Test
     void findByTaskStatus()
     {
         // given
-        when(taskRepository.findByStatus(any(),any(Pageable.class))).thenReturn(tasks);
+        when(taskRepository.findByStatus(any(),any(Pageable.class))).thenReturn(TASKS);
 
         // when
-        Page<Task> result = taskRepository.findByStatus(status,pageable);
+        Page<Task> result = taskRepository.findByStatus(STATUS,PAGEABLE);
 
         // then
-        assertThat(tasks).isEqualTo(result);
+        assertThat(TASKS).isEqualTo(result);
     }
 
 }

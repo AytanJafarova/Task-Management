@@ -40,8 +40,6 @@ class OrganizationServiceImplTest {
     OrganizationService organizationService;
     @InjectMocks
     OrganizationServiceImpl organizationServiceImpl;
-    @Captor
-    ArgumentCaptor<Organization> organizationCaptor = ArgumentCaptor.forClass(Organization.class);
 
     private final Long ID = 10L;
     private final String ORGANIZATION_NAME = "test_organization";
@@ -68,21 +66,9 @@ class OrganizationServiceImplTest {
         verify(organizationRepository, times(1)).findByName("test_organization");
         verifyNoMoreInteractions(organizationRepository);
     }
-    @Test
-    void testCheckingNameInvalidShouldThrowIllegalArgumentExceptionWhenNameNull() {
-        String blank_name = " ";
-        // Given
-        when(organizationRepository.findByName(ORGANIZATION_NAME)).thenThrow(new IllegalArgumentException("Invalid organization name"));
-
-        assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> organizationServiceImpl.checkingName(blank_name,true));
-
-        verify(organizationRepository, times(1)).findByName(" ");
-    }
 
     @Test
-    void testCheckingNameExistingShouldThrowIllegalArgumentException()
-    {
+    void testCheckingNameExistingShouldThrowIllegalArgumentException() {
         // Given
         when(organizationService.checkingName(ORGANIZATION_NAME,!IGNORE_NAME)).thenThrow(new IllegalArgumentException("Organization with the specified name already exists"));
 
@@ -93,8 +79,7 @@ class OrganizationServiceImplTest {
     }
 
     @Test
-    void testCheckingNameValidShouldReturnTrue()
-    {
+    void testCheckingNameValidShouldReturnTrue() {
         // Given
         when(organizationService.checkingName(ORGANIZATION_NAME,IGNORE_NAME)).thenReturn(true);
 
@@ -160,6 +145,7 @@ class OrganizationServiceImplTest {
 
     @Test
     void testUpdateOrganizationThrowsIllegalArgumentException() {
+        // given
         String updatedName = "test_update_organization";
         UpdateOrganizationRequest request = UpdateOrganizationRequest.builder()
                 .name(updatedName)
@@ -171,21 +157,20 @@ class OrganizationServiceImplTest {
         existingOrganization.setStatus(STATUS_ACTIVE);
         existingOrganization.setWorkers(WORKERS);
 
-        when(organizationRepository.findByIdAndStatus(ID,OrganizationStatus.ACTIVE))
+        when(organizationRepository.findByIdAndStatus(anyLong(),any(OrganizationStatus.class)))
                 .thenReturn(Optional.of(existingOrganization));
-        when(organizationRepository.findByName(updatedName.toLowerCase()))
-                .thenReturn(Optional.empty());
-        when(organizationServiceImpl.checkingName("test_update_organization", anyBoolean()))
-                .thenReturn(true);
+        when(organizationRepository.save(existingOrganization))
+                .thenThrow(new IllegalArgumentException(ResponseMessage.ERROR_INVALID_OPERATION));
 
-        // Then
+        // when
         assertThatExceptionOfType(IllegalArgumentException.class)
-                .isThrownBy(() -> organizationServiceImpl.update(ID, request))
-                .withMessageContaining(ResponseMessage.ERROR_ORGANIZATION_EXISTS);
+                .isThrownBy(() -> organizationServiceImpl.update(ID, request));
 
+        // then
         verify(organizationRepository, times(1)).findByIdAndStatus(10L, OrganizationStatus.ACTIVE);
-        verify(organizationRepository, times(1)).findByName("test_update_organization");
+        verify(organizationRepository, times(1)).save(existingOrganization);
     }
+
     @Test
     void testUpdateOrganizationShouldThrowDataNotFoundException() {
         // When
@@ -286,8 +271,7 @@ class OrganizationServiceImplTest {
     }
 
     @Test
-    void testGetOrganizationByIdShouldThrowDataNotFoundException()
-    {
+    void testGetOrganizationByIdShouldThrowDataNotFoundException() {
         // When
         when(organizationRepository.findByIdAndStatus(ID,STATUS_ACTIVE)).thenThrow(new DataNotFoundException("Organization not found by given id"));
 

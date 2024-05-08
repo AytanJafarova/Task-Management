@@ -26,73 +26,73 @@ class OrganizationRepositoryTest {
     @Mock
     OrganizationRepository organizationRepository;
 
-    private Page<Organization> organizations= new PageImpl<>(new ArrayList<>());
+    private Page<Organization> ORGANIZATIONS= new PageImpl<>(new ArrayList<>());
 
-    private final Long id = 1L;
-    private final String organizationName = "test_organization";
-    private final OrganizationStatus statusActive = OrganizationStatus.ACTIVE;
-    private final List<Worker> workers = new ArrayList<>();
-    private final Organization organization= new Organization();
-    private final Pageable pageable = PageRequest.of(0,1);
+    private final Long ID = 1L;
+    private final String ORGANIZATION_NAME = "test_organization";
+    private final OrganizationStatus STATUS_ACTIVE = OrganizationStatus.ACTIVE;
+    private final List<Worker> WORKERS = new ArrayList<>();
+    private final Organization ORGANIZATION= new Organization();
+    private final Pageable PAGEABLE = PageRequest.of(0,1);
 
     @BeforeEach
     void setUp() {
-        organization.setId(id);
-        organization.setName(organizationName);
-        organization.setStatus(statusActive);
-        organization.setWorkers(workers);
-        organizations = new PageImpl<>(Collections.singletonList(organization));
+        ORGANIZATION.setId(ID);
+        ORGANIZATION.setName(ORGANIZATION_NAME);
+        ORGANIZATION.setStatus(STATUS_ACTIVE);
+        ORGANIZATION.setWorkers(WORKERS);
+        ORGANIZATIONS = new PageImpl<>(Collections.singletonList(ORGANIZATION));
     }
 
     @Test
     void findByStatus()
     {
         // given
-        when(organizationRepository.findByStatus(any(OrganizationStatus.class), any(Pageable.class))).thenReturn(organizations);
+        when(organizationRepository.findByStatus(any(OrganizationStatus.class), any(Pageable.class))).thenReturn(ORGANIZATIONS);
 
         // when
-        Page<Organization> result = organizationRepository.findByStatus(statusActive,pageable);
+        Page<Organization> result = organizationRepository.findByStatus(STATUS_ACTIVE,PAGEABLE);
 
         // then
-        assertThat(organizations).isEqualTo(result);
+        assertThat(ORGANIZATIONS).isEqualTo(result);
     }
 
     @Test
     void findByIdAndStatus()
     {
         // given
-        when(organizationRepository.findByIdAndStatus(anyLong(),any(OrganizationStatus.class))).thenReturn(Optional.of(organization));
+        when(organizationRepository.findByIdAndStatus(anyLong(),any(OrganizationStatus.class))).thenReturn(Optional.of(ORGANIZATION));
 
         // when
-        Optional<Organization> result = organizationRepository.findByIdAndStatus(id,statusActive);
+        Optional<Organization> result = organizationRepository.findByIdAndStatus(ID,STATUS_ACTIVE);
 
         // then
-        assertThat(organization).isEqualTo(result.get());
+        assertThat(ORGANIZATION).isEqualTo(result.get());
     }
 
     @Test
     void findByName()
     {
         // given
-        when(organizationRepository.findByName(anyString())).thenReturn(Optional.of(organization));
+        when(organizationRepository.findByName(anyString())).thenReturn(Optional.of(ORGANIZATION));
 
         // when
-        Optional<Organization> result = organizationRepository.findByName(organizationName);
+        Optional<Organization> result = organizationRepository.findByName(ORGANIZATION_NAME);
 
         // then
-        assertThat(organization).isEqualTo(result.get());
+        assertThat(ORGANIZATION).isEqualTo(result.get());
     }
 
     @Test
     void findAllWithWorkers()
     {
         // given
-        when(organizationRepository.findAllWithWorkers(any(Pageable.class))).thenReturn(organizations);
+        when(organizationRepository.findAllWithWorkers(any(Pageable.class))).thenReturn(ORGANIZATIONS);
 
         // when
-        Page<Organization> result = organizationRepository.findAllWithWorkers(pageable);
+        Page<Organization> result = organizationRepository.findAllWithWorkers(PAGEABLE);
 
         // then
-        assertThat(organizations).isEqualTo(result);
+        assertThat(ORGANIZATIONS).isEqualTo(result);
     }
 }
